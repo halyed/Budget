@@ -1,0 +1,98 @@
+<div class="flex h-screen bg-gray-100 font-sans">
+  <!-- Sidebar -->
+  <aside class="w-56 bg-white shadow-md flex flex-col">
+    <div class="px-6 py-5 border-b">
+      <h1 class="text-xl font-bold text-indigo-600">💰 Budget</h1>
+    </div>
+    <nav class="flex-1 py-4 space-y-1 px-3">
+      @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path"
+          routerLinkActive="bg-indigo-50 text-indigo-600 font-semibold"
+          class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+    <div class="px-4 py-4 border-t space-y-1">
+      <p class="text-xs text-gray-400 px-3 pb-1">{{ username }}</p>
+      <button
+        (click)="openModal()"
+        class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+      >
+        Change password
+      </button>
+      <button
+        (click)="logout()"
+        class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+      >
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Change-password modal -->
+  @if (showModal()) {
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="closeModal()">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" (click)="$event.stopPropagation()">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Change password</h2>
+
+        <form (ngSubmit)="submitChangePassword()" #f="ngForm" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+            <input
+              type="password"
+              [ngModel]="cpCurrent()"
+              (ngModelChange)="cpCurrent.set($event)"
+              name="cpCurrent"
+              required
+              autocomplete="current-password"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">New password</label>
+            <input
+              type="password"
+              [ngModel]="cpNew()"
+              (ngModelChange)="cpNew.set($event)"
+              name="cpNew"
+              required
+              autocomplete="new-password"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          @if (cpError()) {
+            <p class="text-red-500 text-sm">{{ cpError() }}</p>
+          }
+          @if (cpSuccess()) {
+            <p class="text-green-600 text-sm">Password updated successfully.</p>
+          }
+
+          <div class="flex gap-2 pt-1">
+            <button
+              type="button"
+              (click)="closeModal()"
+              class="flex-1 border border-gray-300 rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="cpLoading()"
+              class="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            >
+              {{ cpLoading() ? 'Saving…' : 'Update' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Main content -->
+  <main class="flex-1 overflow-auto">
+    <router-outlet />
+  </main>
+</div>

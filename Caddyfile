@@ -1,0 +1,4 @@
+# Replace with your actual domain. Caddy will obtain a Let's Encrypt cert automatically.
+your-domain.com {
+    reverse_proxy frontend:80
+}

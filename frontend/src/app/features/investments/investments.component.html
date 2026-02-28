@@ -1,0 +1,106 @@
+<div class="p-6 space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">Investments</h1>
+    <div class="flex items-center gap-4">
+      <span class="text-lg font-semibold text-indigo-600">Total: €{{ total() | number:'1.0-0' }}</span>
+      <button (click)="showForm.set(!showForm()); editingId.set(null)"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+        + Add
+      </button>
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <div class="bg-white rounded-xl shadow p-5 border border-indigo-100">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">New Investment</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Name</label>
+          <input type="text" [(ngModel)]="form.name"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Type</label>
+          <select [(ngModel)]="form.type"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option value="etf">ETF</option>
+            <option value="stocks">Stocks</option>
+            <option value="crypto">Crypto</option>
+            <option value="cash">Cash</option>
+            <option value="real_estate">Real Estate</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
+          <input type="number" [(ngModel)]="form.value" min="0" step="0.01"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button (click)="save()" [disabled]="saving()"
+          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          {{ saving() ? 'Saving...' : 'Save' }}
+        </button>
+        <button (click)="showForm.set(false)"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (editingId() !== null) {
+    <div class="bg-white rounded-xl shadow p-5 border border-amber-200">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Investment</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Name</label>
+          <input type="text" [(ngModel)]="editForm.name"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Type</label>
+          <select [(ngModel)]="editForm.type"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <option value="etf">ETF</option>
+            <option value="stocks">Stocks</option>
+            <option value="crypto">Crypto</option>
+            <option value="cash">Cash</option>
+            <option value="real_estate">Real Estate</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
+          <input type="number" [(ngModel)]="editForm.value" min="0" step="0.01"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button (click)="saveEdit()" [disabled]="saving()"
+          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+          {{ saving() ? 'Saving...' : 'Update' }}
+        </button>
+        <button (click)="cancelEdit()"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center gap-2 text-gray-400 text-sm py-12 justify-center">
+      <span class="animate-spin text-lg">⟳</span> Loading...
+    </div>
+  }
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" [class.hidden]="loading()">
+    @for (inv of investments(); track inv.id) {
+      <div class="bg-white rounded-xl shadow p-5" [class.border-2]="editingId() === inv.id" [class.border-amber-300]="editingId() === inv.id">
+        <p class="text-sm text-gray-500 capitalize">{{ inv.type }}</p>
+        <p class="text-xl font-bold text-gray-800 mt-1">{{ inv.name }}</p>
+        <p class="text-2xl font-bold text-indigo-600 mt-2">€{{ inv.value | number:'1.0-0' }}</p>
+        <p class="text-xs text-gray-400 mt-2">Updated {{ inv.updated_at | date:'mediumDate' }}</p>
+        <div class="flex gap-3 mt-3">
+          <button (click)="startEdit(inv)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
+          <button (click)="delete(inv.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

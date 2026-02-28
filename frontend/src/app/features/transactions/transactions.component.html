@@ -1,0 +1,167 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Transactions</h1>
+    <button (click)="showForm.set(!showForm()); editingId.set(null)"
+      class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+      + Add Transaction
+    </button>
+  </div>
+
+  <!-- Add form -->
+  @if (showForm()) {
+    <div class="bg-white rounded-xl shadow p-5 mb-6 border border-indigo-100">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">New Transaction</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Date</label>
+          <input type="date" [(ngModel)]="form.date"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+          <input type="number" [(ngModel)]="form.amount" min="0" step="0.01"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Type</label>
+          <select [(ngModel)]="form.type"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+            <option value="savings">Savings</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Category</label>
+          <select [(ngModel)]="form.category_id"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <option [ngValue]="null">— None —</option>
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-gray-500 mb-1">Description</label>
+          <input type="text" [(ngModel)]="form.description" placeholder="Optional note..."
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button (click)="save()" [disabled]="saving()"
+          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          {{ saving() ? 'Saving...' : 'Save' }}
+        </button>
+        <button (click)="showForm.set(false)"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <!-- Edit form -->
+  @if (editingId() !== null) {
+    <div class="bg-white rounded-xl shadow p-5 mb-6 border border-amber-200">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Transaction</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Date</label>
+          <input type="date" [(ngModel)]="editForm.date"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+          <input type="number" [(ngModel)]="editForm.amount" min="0" step="0.01"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Type</label>
+          <select [(ngModel)]="editForm.type"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+            <option value="savings">Savings</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Category</label>
+          <select [(ngModel)]="editForm.category_id"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+            <option [ngValue]="null">— None —</option>
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-gray-500 mb-1">Description</label>
+          <input type="text" [(ngModel)]="editForm.description"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+      </div>
+      @if (errorMsg()) {
+        <p class="mt-3 text-sm text-red-600 bg-red-50 rounded px-3 py-2">{{ errorMsg() }}</p>
+      }
+      <div class="flex gap-3 mt-4">
+        <button (click)="saveEdit()" [disabled]="saving()"
+          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+          {{ saving() ? 'Saving...' : 'Update' }}
+        </button>
+        <button (click)="cancelEdit()"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  <!-- Table -->
+  @if (loading()) {
+    <div class="flex items-center gap-2 text-gray-400 text-sm py-12 justify-center">
+      <span class="animate-spin text-lg">⟳</span> Loading...
+    </div>
+  }
+  <div class="bg-white rounded-xl shadow overflow-hidden" [class.hidden]="loading()">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr class="text-left text-gray-500">
+          <th class="px-4 py-3">Date</th>
+          <th class="px-4 py-3">Description</th>
+          <th class="px-4 py-3">Category</th>
+          <th class="px-4 py-3">Type</th>
+          <th class="px-4 py-3 text-right">Amount</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of transactions(); track t.id) {
+          <tr class="border-t hover:bg-gray-50" [class.bg-amber-50]="editingId() === t.id">
+            <td class="px-4 py-3 text-gray-500">{{ t.date }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ t.description || '—' }}</td>
+            <td class="px-4 py-3 text-gray-500">{{ t.category?.name || '—' }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs font-medium"
+                [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
+                [class.bg-red-100]="t.type === 'expense'" [class.text-red-700]="t.type === 'expense'"
+                [class.bg-blue-100]="t.type === 'savings'" [class.text-blue-700]="t.type === 'savings'">
+                {{ t.type }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right font-medium"
+              [class.text-green-600]="t.type === 'income'"
+              [class.text-red-500]="t.type === 'expense'"
+              [class.text-blue-600]="t.type === 'savings'">
+              {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <button (click)="startEdit(t)" class="text-gray-400 hover:text-amber-500 text-xs mr-2">Edit</button>
+              <button (click)="delete(t.id)" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
+            </td>
+          </tr>
+        }
+        @empty {
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-gray-400">No transactions yet.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
