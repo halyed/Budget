@@ -24,7 +24,7 @@ def _to_read(goal: SavingsGoal, total: float) -> GoalRead:
     )
 
 
-@router.get("/", response_model=list[GoalRead])
+@router.get("", response_model=list[GoalRead])
 def list_goals(db: Session = Depends(get_db)):
     total = _investment_total(db)
     goals = db.query(SavingsGoal).order_by(SavingsGoal.target_date).all()
@@ -39,7 +39,7 @@ def get_goal(goal_id: int, db: Session = Depends(get_db)):
     return _to_read(goal, _investment_total(db))
 
 
-@router.post("/", response_model=GoalRead, status_code=201)
+@router.post("", response_model=GoalRead, status_code=201)
 def create_goal(payload: GoalCreate, db: Session = Depends(get_db)):
     goal = SavingsGoal(**payload.model_dump())
     db.add(goal)

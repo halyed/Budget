@@ -7,7 +7,7 @@ from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryRead
 router = APIRouter()
 
 
-@router.get("/", response_model=list[CategoryRead])
+@router.get("", response_model=list[CategoryRead])
 def list_categories(db: Session = Depends(get_db)):
     return db.query(Category).order_by(Category.type, Category.name).all()
 
@@ -20,7 +20,7 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
     return category
 
 
-@router.post("/", response_model=CategoryRead, status_code=201)
+@router.post("", response_model=CategoryRead, status_code=201)
 def create_category(payload: CategoryCreate, db: Session = Depends(get_db)):
     category = Category(**payload.model_dump())
     db.add(category)

@@ -111,7 +111,7 @@ def bulk_import(payload: BulkImportPayload, db: Session = Depends(get_db)):
     return BulkImportResult(created=created, skipped=skipped, errors=errors)
 
 
-@router.get("/", response_model=List[TransactionRead])
+@router.get("", response_model=List[TransactionRead])
 def list_transactions(
     month: Optional[int] = Query(None, ge=1, le=12),
     year: Optional[int] = Query(None),
@@ -139,7 +139,7 @@ def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
     return t
 
 
-@router.post("/", response_model=TransactionRead, status_code=201)
+@router.post("", response_model=TransactionRead, status_code=201)
 def create_transaction(payload: TransactionCreate, db: Session = Depends(get_db)):
     transaction = Transaction(**payload.model_dump())
     db.add(transaction)

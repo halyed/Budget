@@ -7,7 +7,7 @@ from app.schemas.investment import InvestmentCreate, InvestmentUpdate, Investmen
 router = APIRouter()
 
 
-@router.get("/", response_model=list[InvestmentRead])
+@router.get("", response_model=list[InvestmentRead])
 def list_investments(db: Session = Depends(get_db)):
     return db.query(Investment).order_by(Investment.type).all()
 
@@ -20,7 +20,7 @@ def get_investment(investment_id: int, db: Session = Depends(get_db)):
     return inv
 
 
-@router.post("/", response_model=InvestmentRead, status_code=201)
+@router.post("", response_model=InvestmentRead, status_code=201)
 def create_investment(payload: InvestmentCreate, db: Session = Depends(get_db)):
     inv = Investment(**payload.model_dump())
     db.add(inv)
