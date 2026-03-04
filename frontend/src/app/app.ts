@@ -28,6 +28,10 @@ export class App {
   cpSuccess   = signal(false);
   cpLoading   = signal(false);
 
+  isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
   get username(): string {
     const token = this.authService.getToken();
     if (!token) return '';
@@ -63,6 +67,7 @@ export class App {
       next: () => {
         this.cpSuccess.set(true);
         this.cpLoading.set(false);
+        setTimeout(() => this.closeModal(), 1500);
       },
       error: (err) => {
         this.cpError.set(err.error?.detail ?? 'Failed to update password.');

@@ -15,18 +15,22 @@
     </nav>
     <div class="px-4 py-4 border-t space-y-1">
       <p class="text-xs text-gray-400 px-3 pb-1">{{ username }}</p>
-      <button
-        (click)="openModal()"
-        class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-      >
-        Change password
-      </button>
-      <button
-        (click)="logout()"
-        class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-      >
-        Sign out
-      </button>
+      @if (isAuthenticated()) {
+        <button
+          (click)="openModal()"
+          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          Change password
+        </button>
+      }
+      @if (isAuthenticated()) {
+        <button
+          (click)="logout()"
+          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          Sign out
+        </button>
+      }
     </div>
   </aside>
 
