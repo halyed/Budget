@@ -138,8 +138,21 @@ export class TransactionsComponent implements OnInit {
 
   private exampleJson(): string {
     return JSON.stringify([
-      { "description": "Rent", "amount": 800, "category_name": "Housing", "type": "expense", "day": 1 },
-      { "description": "Salary", "amount": 3000, "category_name": "Income", "type": "income", "day": 28 }
+      { "description": "Monthly salary",  "amount": 2273, "category_name": null,             "type": "income",  "day": 1  },
+      { "description": "Rent",            "amount": 754,  "category_name": "Rent",            "type": "expense", "day": 1  },
+      { "description": "Transport",       "amount": 91,   "category_name": "Transport",       "type": "expense", "day": 1  },
+      { "description": "Internet",        "amount": 35,   "category_name": "Internet",        "type": "expense", "day": 1  },
+      { "description": "Electricity",     "amount": 47,   "category_name": "Electricity",     "type": "expense", "day": 1  },
+      { "description": "Sport",           "amount": 25,   "category_name": "Sport",           "type": "expense", "day": 1  },
+      { "description": "Phone",           "amount": 10,   "category_name": "Phone",           "type": "expense", "day": 1  },
+      { "description": "Groceries",       "amount": 250,  "category_name": "Groceries",       "type": "expense", "day": 15 },
+      { "description": "Personal Care",   "amount": 100,  "category_name": "Personal Care",   "type": "expense", "day": 15 },
+      { "description": "Gifts / Misc",    "amount": 100,  "category_name": "Gifts / Misc",    "type": "expense", "day": 15 },
+      { "description": "Eating Out",      "amount": 50,   "category_name": "Eating Out",      "type": "expense", "day": 15 },
+      { "description": "Claude Code",     "amount": 20,   "category_name": "Claude Code",     "type": "expense", "day": 1  },
+      { "description": "DEV / PLM Books", "amount": 50,   "category_name": "DEV / PLM Books", "type": "expense", "day": 1  },
+      { "description": "Networking",      "amount": 30,   "category_name": "Networking",      "type": "expense", "day": 1  },
+      { "description": "Family Abroad",   "amount": 150,  "category_name": "Family Abroad",   "type": "expense", "day": 1  }
     ], null, 2);
   }
 
