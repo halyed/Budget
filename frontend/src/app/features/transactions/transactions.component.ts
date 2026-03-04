@@ -24,6 +24,14 @@ export class TransactionsComponent implements OnInit {
   editForm: TransactionCreate = this.blank();
   form: TransactionCreate = this.blank();
 
+  // Bulk import
+  showBulk    = signal(false);
+  bulkMonth   = signal(new Date().toISOString().slice(0, 7));
+  bulkJson    = signal(this.exampleJson());
+  bulkLoading = signal(false);
+  bulkResult  = signal<{ created: number; skipped: number; errors: string[] } | null>(null);
+  bulkError   = signal<string | null>(null);
+
   constructor(
     private transactionService: TransactionService,
     private categoryService: CategoryService,
@@ -95,6 +103,44 @@ export class TransactionsComponent implements OnInit {
   delete(id: number): void {
     if (!confirm('Delete this transaction?')) return;
     this.transactionService.delete(id).subscribe(() => this.load());
+  }
+
+  openBulk(): void {
+    this.bulkResult.set(null);
+    this.bulkError.set(null);
+    this.showBulk.set(true);
+  }
+
+  submitBulk(): void {
+    this.bulkError.set(null);
+    this.bulkResult.set(null);
+    let transactions: object[];
+    try {
+      transactions = JSON.parse(this.bulkJson());
+      if (!Array.isArray(transactions)) throw new Error();
+    } catch {
+      this.bulkError.set('Invalid JSON — must be an array [ ... ]');
+      return;
+    }
+    this.bulkLoading.set(true);
+    this.transactionService.bulkImport(this.bulkMonth(), transactions).subscribe({
+      next: (res) => {
+        this.bulkResult.set(res);
+        this.bulkLoading.set(false);
+        this.load();
+      },
+      error: (err) => {
+        this.bulkError.set(err.error?.detail ?? 'Import failed.');
+        this.bulkLoading.set(false);
+      },
+    });
+  }
+
+  private exampleJson(): string {
+    return JSON.stringify([
+      { "description": "Rent", "amount": 800, "category_name": "Housing", "type": "expense", "day": 1 },
+      { "description": "Salary", "amount": 3000, "category_name": "Income", "type": "income", "day": 28 }
+    ], null, 2);
   }
 
   private blank(): TransactionCreate {

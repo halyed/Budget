@@ -26,4 +26,8 @@ export class TransactionService {
   delete(id: number): Observable<void> {
     return this.api.delete<void>(`/transactions/${id}`);
   }
+
+  bulkImport(month: string, transactions: object[]): Observable<{ created: number; skipped: number; errors: string[] }> {
+    return this.api.post('/transactions/bulk', { month, transactions });
+  }
 }
