@@ -1,37 +1,32 @@
 services:
   backend:
+    container_name: budget-backend
     build: ./backend
     env_file: ./backend/.env
     environment:
-      # Override DB path to use the persistent volume
       DATABASE_URL: sqlite:////app/data/budget.db
-      # In production, ALLOWED_ORIGINS can be set to "*" or your domain;
-      # CORS is less critical here because nginx proxies API calls same-origin.
       ALLOWED_ORIGINS: "*"
     volumes:
       - db_data:/app/data
+    networks:
+      - web
+      - internal
     restart: unless-stopped
-    # Not exposed to the host — only reachable by nginx internally
 
   frontend:
+    container_name: budget-frontend
     build: ./frontend
     depends_on:
       - backend
-    restart: unless-stopped
-    # No ports exposed — only reachable by Caddy internally
-
-  caddy:
-    image: caddy:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-    depends_on:
-      - frontend
+    networks:
+      - web
+      - internal
     restart: unless-stopped
 
 volumes:
   db_data:
-  caddy_data:
+
+networks:
+  web:
+    external: true
+  internal:
