@@ -21,6 +21,7 @@ export class App {
   ];
 
   // Change-password modal state
+  sidebarOpen = signal(false);
   showModal   = signal(false);
   cpCurrent   = signal('');
   cpNew       = signal('');
