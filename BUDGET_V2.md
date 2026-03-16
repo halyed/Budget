@@ -60,7 +60,7 @@
 
 ## Phase 6 — Config & Deployment
 
-- [ ] 6.1 Fix `ALLOWED_ORIGINS: "*"` in `docker-compose.yml` — must be explicit origin for cookies to work
+- [x] 6.1 Fix `ALLOWED_ORIGINS: "*"` in `docker-compose.yml` — must be explicit origin for cookies to work
 - [ ] 6.2 Add `REGISTRATION_ENABLED` env var
 - [ ] 6.3 Add `ADMIN_EMAIL` env var, update `.env` / `docker-compose.yml`
 
