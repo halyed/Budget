@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from datetime import date
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.models.transaction import Transaction
 from app.models.category import Category
 from app.models.investment import Investment
 from app.models.goal import SavingsGoal
+from app.models.user import User
 
 router = APIRouter()
 
@@ -16,8 +18,10 @@ def get_monthly_summary(
     month: int = Query(default=date.today().month, ge=1, le=12),
     year: int = Query(default=date.today().year),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     base_q = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id,
         extract("month", Transaction.date) == month,
         extract("year", Transaction.date) == year,
     )
@@ -41,14 +45,16 @@ def get_budget_vs_actual(
     month: int = Query(default=date.today().month, ge=1, le=12),
     year: int = Query(default=date.today().year),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    categories = db.query(Category).all()
+    categories = db.query(Category).filter(Category.user_id == current_user.id).all()
     result = []
 
     for cat in categories:
         actual = (
             db.query(func.sum(Transaction.amount))
             .filter(
+                Transaction.user_id == current_user.id,
                 Transaction.category_id == cat.id,
                 Transaction.type == "expense",
                 extract("month", Transaction.date) == month,
@@ -69,17 +75,22 @@ def get_budget_vs_actual(
 
 
 @router.get("/portfolio")
-def get_portfolio_summary(db: Session = Depends(get_db)):
-    investments = db.query(Investment).all()
+def get_portfolio_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
     total = sum(i.value for i in investments)
     breakdown = [{"id": i.id, "name": i.name, "type": i.type, "value": i.value} for i in investments]
-
     return {"total_portfolio": round(total, 2), "breakdown": breakdown}
 
 
 @router.get("/goals")
-def get_goals_summary(db: Session = Depends(get_db)):
-    goals = db.query(SavingsGoal).all()
+def get_goals_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    goals = db.query(SavingsGoal).filter(SavingsGoal.user_id == current_user.id).all()
     return [
         {
             "id": g.id,

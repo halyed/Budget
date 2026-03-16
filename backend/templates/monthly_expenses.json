@@ -10,7 +10,7 @@
       "day": 1
     },
 
-    { "description": "Rent",        "amount": 73, "category_name": "Rent",        "type": "expense", "day": 1 },
+    { "description": "Rent",        "amount": 754, "category_name": "Rent",        "type": "expense", "day": 1 },
     { "description": "Transport",   "amount": 91,  "category_name": "Transport",   "type": "expense", "day": 1 },
     { "description": "Internet",    "amount": 35,  "category_name": "Internet",    "type": "expense", "day": 1 },
     { "description": "Electricity", "amount": 47,  "category_name": "Electricity", "type": "expense", "day": 1 },

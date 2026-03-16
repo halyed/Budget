@@ -1,0 +1,32 @@
+<div class="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-md w-full max-w-sm p-8 text-center">
+    <h1 class="text-2xl font-bold text-indigo-600 mb-6">💰 Budget</h1>
+
+    @if (status() === 'loading') {
+      <p class="text-gray-500">Verifying your email…</p>
+    }
+
+    @if (status() === 'success') {
+      <div class="text-green-600 mb-4">
+        <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <p class="font-semibold">{{ message() }}</p>
+      </div>
+      <a routerLink="/login"
+         class="inline-block bg-indigo-600 text-white rounded-lg px-6 py-2 text-sm font-semibold hover:bg-indigo-700 transition-colors">
+        Sign in
+      </a>
+    }
+
+    @if (status() === 'error') {
+      <div class="text-red-500 mb-4">
+        <p class="font-semibold">{{ message() }}</p>
+      </div>
+      <a routerLink="/login"
+         class="text-indigo-600 hover:underline text-sm">
+        Back to sign in
+      </a>
+    }
+  </div>
+</div>

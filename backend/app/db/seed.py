@@ -1,11 +1,13 @@
 """
-Run once to seed the database with categories, investments, and goals from Notion.
-Usage: python -m app.db.seed
+Seed the database with default categories, investments, and goals for a given user.
+Only seeds if the user has no existing data (safe to call on every startup).
+Usage: python -m app.db.seed  (seeds the admin user)
 """
 from app.core.database import SessionLocal
 from app.models.category import Category
 from app.models.investment import Investment
 from app.models.goal import SavingsGoal
+from app.models.user import User
 from datetime import date
 
 
@@ -47,20 +49,29 @@ GOALS = [
 ]
 
 
-def seed():
+def seed(user_id: int | None = None):
     db = SessionLocal()
     try:
-        if db.query(Category).count() == 0:
-            db.add_all([Category(**c) for c in CATEGORIES])
-            print(f"Seeded {len(CATEGORIES)} categories.")
+        # Resolve user: use provided id or fall back to first user (admin)
+        if user_id is None:
+            user = db.query(User).first()
+            if not user:
+                print("No users found — skipping seed.")
+                return
+            user_id = user.id
 
-        if db.query(Investment).count() == 0:
-            db.add_all([Investment(**i) for i in INVESTMENTS])
-            print(f"Seeded {len(INVESTMENTS)} investments.")
+        # Only seed if this user has no data yet
+        if db.query(Category).filter(Category.user_id == user_id).count() == 0:
+            db.add_all([Category(**c, user_id=user_id) for c in CATEGORIES])
+            print(f"Seeded {len(CATEGORIES)} categories for user {user_id}.")
 
-        if db.query(SavingsGoal).count() == 0:
-            db.add_all([SavingsGoal(**g) for g in GOALS])
-            print(f"Seeded {len(GOALS)} goals.")
+        if db.query(Investment).filter(Investment.user_id == user_id).count() == 0:
+            db.add_all([Investment(**i, user_id=user_id) for i in INVESTMENTS])
+            print(f"Seeded {len(INVESTMENTS)} investments for user {user_id}.")
+
+        if db.query(SavingsGoal).filter(SavingsGoal.user_id == user_id).count() == 0:
+            db.add_all([SavingsGoal(**g, user_id=user_id) for g in GOALS])
+            print(f"Seeded {len(GOALS)} goals for user {user_id}.")
 
         db.commit()
         print("Seed complete.")

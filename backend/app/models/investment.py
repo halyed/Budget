@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Float, DateTime
+from sqlalchemy import String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -12,3 +12,4 @@ class Investment(Base):
     type: Mapped[str] = mapped_column(String(20), nullable=False)  # etf, crypto, cash, stocks, real_estate
     value: Mapped[float] = mapped_column(Float, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)

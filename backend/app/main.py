@@ -19,9 +19,10 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
     with Session(engine) as db:
-        if not db.query(User).filter(User.username == settings.admin_username).first():
+        if not db.query(User).filter(User.email == settings.admin_email).first():
             db.add(User(
                 username=settings.admin_username,
+                email=settings.admin_email,
                 password_hash=hash_password(settings.admin_password),
             ))
             db.commit()

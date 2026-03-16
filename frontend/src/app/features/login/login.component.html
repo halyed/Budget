@@ -4,14 +4,14 @@
 
     <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input
-          type="text"
-          [ngModel]="username()"
-          (ngModelChange)="username.set($event)"
-          name="username"
+          type="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          name="email"
           required
-          autocomplete="username"
+          autocomplete="email"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
@@ -29,8 +29,25 @@
         />
       </div>
 
+      @if (success()) {
+        <p class="text-green-600 text-sm text-center">{{ success() }}</p>
+      }
+
       @if (error()) {
         <p class="text-red-500 text-sm text-center">{{ error() }}</p>
+      }
+
+      @if (showResend()) {
+        @if (resendSent()) {
+          <p class="text-green-600 text-sm text-center">Verification email resent — check your inbox.</p>
+        } @else {
+          <p class="text-sm text-center">
+            <button type="button" (click)="resendVerification()"
+              class="text-indigo-600 hover:underline font-medium">
+              Resend verification email
+            </button>
+          </p>
+        }
       }
 
       <button
@@ -41,5 +58,10 @@
         {{ loading() ? 'Signing in…' : 'Sign in' }}
       </button>
     </form>
+
+    <p class="text-sm text-gray-500 text-center mt-4">
+      Don't have an account?
+      <a routerLink="/register" class="text-indigo-600 hover:underline font-medium">Register</a>
+    </p>
   </div>
 </div>
