@@ -68,9 +68,9 @@
 
 ## Phase 7 — Reports (Frontend)
 
-- [ ] 7.1 Build `ReportsComponent` — monthly trend charts across multiple months
-- [ ] 7.2 Add chart library (e.g. Chart.js or ngx-charts)
-- [ ] 7.3 Wire up to existing dashboard/transaction API endpoints
+- [x] 7.1 Build `ReportsComponent` — monthly trend charts across multiple months
+- [x] 7.2 Add chart library (Chart.js direct, no wrapper — Angular 21 compatible)
+- [x] 7.3 New `GET /api/v1/reports/monthly-summary?months=N` endpoint
 
 ---
 

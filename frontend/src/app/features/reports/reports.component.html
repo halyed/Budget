@@ -1,4 +1,104 @@
-<div class="p-6">
-  <h1 class="text-2xl font-bold text-gray-800 mb-4">Reports</h1>
-  <p class="text-gray-500">Monthly trend charts — coming soon.</p>
+<div class="p-6 space-y-6">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <h1 class="text-2xl font-bold text-gray-800">Reports</h1>
+
+    <!-- Period selector -->
+    <div class="flex gap-2">
+      @for (opt of periodOptions; track opt.value) {
+        <button
+          (click)="selectPeriod(opt.value)"
+          [class.bg-indigo-600]="selectedMonths() === opt.value"
+          [class.text-white]="selectedMonths() === opt.value"
+          [class.bg-white]="selectedMonths() !== opt.value"
+          [class.text-gray-700]="selectedMonths() !== opt.value"
+          class="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 shadow-sm transition-colors"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center h-48 text-gray-400">Loading…</div>
+  } @else if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-4">{{ error() }}</div>
+  } @else if (data()) {
+
+    <!-- Row 1: Income vs Expenses + Savings Rate -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Income vs Expenses</h2>
+        <div class="h-56">
+          <canvas #incomeExpensesCanvas></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Savings Rate</h2>
+        <div class="h-56">
+          <canvas #savingsRateCanvas></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Row 2: Category Breakdown + Category Trends -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Category Breakdown (latest month)</h2>
+        @if (data()!.category_trends.length === 0) {
+          <p class="text-gray-400 text-sm mt-8 text-center">No expense data yet.</p>
+        } @else {
+          <div class="h-56">
+            <canvas #categoryBreakdownCanvas></canvas>
+          </div>
+        }
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Category Trends</h2>
+        @if (data()!.category_trends.length === 0) {
+          <p class="text-gray-400 text-sm mt-8 text-center">No expense data yet.</p>
+        } @else {
+          <div class="h-56">
+            <canvas #categoryTrendsCanvas></canvas>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- Monthly summary table -->
+    <div class="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
+      <h2 class="text-sm font-semibold text-gray-600 mb-3">Monthly Summary</h2>
+      <table class="w-full text-sm text-left">
+        <thead>
+          <tr class="border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wide">
+            <th class="pb-2 pr-4">Month</th>
+            <th class="pb-2 pr-4 text-right">Income</th>
+            <th class="pb-2 pr-4 text-right">Expenses</th>
+            <th class="pb-2 pr-4 text-right">Saved</th>
+            <th class="pb-2 text-right">Savings Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of data()!.months; track m.label) {
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td class="py-2 pr-4 font-medium text-gray-700">{{ m.label }}</td>
+              <td class="py-2 pr-4 text-right text-green-600">{{ m.income | number:'1.2-2' }}</td>
+              <td class="py-2 pr-4 text-right text-red-500">{{ m.expenses | number:'1.2-2' }}</td>
+              <td class="py-2 pr-4 text-right" [class.text-green-600]="m.savings >= 0" [class.text-red-500]="m.savings < 0">
+                {{ m.savings | number:'1.2-2' }}
+              </td>
+              <td class="py-2 text-right text-indigo-600 font-medium">{{ m.savings_rate }}%</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+  }
 </div>
