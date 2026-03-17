@@ -44,4 +44,4 @@ jobs:
 
       - name: Run tests
         working-directory: frontend
-        run: npm test -- --run
+        run: npm test -- --watch=false
