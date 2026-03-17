@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            git pull origin master
+            docker compose up --build -d
+            echo "Deploy done at $(date)"
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl --fail --silent --max-time 10 https://hbudget.duckdns.org/health \
+            && echo "Health check passed" \
+            || (echo "Health check failed" && exit 1)
