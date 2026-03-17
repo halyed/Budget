@@ -1,10 +1,11 @@
 import {
   Component, OnInit, OnDestroy, AfterViewInit,
-  ViewChild, ElementRef, signal, computed
+  ViewChild, ElementRef, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { ApiService } from '../../core/services/api.service';
+import { AiService } from '../../core/services/ai.service';
 
 Chart.register(...registerables);
 
@@ -53,6 +54,10 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
   error = signal<string | null>(null);
   data = signal<ReportData | null>(null);
 
+  insightsText = signal<string | null>(null);
+  insightsLoading = signal(false);
+  insightsError = signal<string | null>(null);
+
   periodOptions = [
     { label: 'Last 3 months', value: 3 },
     { label: 'Last 6 months', value: 6 },
@@ -63,7 +68,7 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
   private viewInitialized = false;
   private dataLoaded = false;
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private aiService: AiService) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -78,6 +83,22 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyCharts();
+  }
+
+  getInsights(): void {
+    this.insightsLoading.set(true);
+    this.insightsError.set(null);
+    this.insightsText.set(null);
+    this.aiService.getInsights(this.selectedMonths()).subscribe({
+      next: (res) => {
+        this.insightsText.set(res.insights);
+        this.insightsLoading.set(false);
+      },
+      error: (err) => {
+        this.insightsError.set(err.error?.detail ?? 'Failed to get insights.');
+        this.insightsLoading.set(false);
+      },
+    });
   }
 
   selectPeriod(months: number): void {

@@ -71,6 +71,31 @@
 
     </div>
 
+    <!-- AI Insights -->
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-gray-600">AI Spending Insights</h2>
+        <button (click)="getInsights()" [disabled]="insightsLoading()"
+          class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+          {{ insightsLoading() ? 'Analysing…' : 'Get AI Insights' }}
+        </button>
+      </div>
+
+      @if (insightsLoading()) {
+        <div class="flex items-center gap-2 text-gray-400 text-sm py-4">
+          <span class="animate-spin">⟳</span> Phi-3 Mini is thinking…
+        </div>
+      } @else if (insightsError()) {
+        <p class="text-red-500 text-sm">{{ insightsError() }}</p>
+      } @else if (insightsText()) {
+        <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-indigo-50 rounded-xl p-4">
+          {{ insightsText() }}
+        </div>
+      } @else {
+        <p class="text-gray-400 text-sm">Click "Get AI Insights" to analyse your spending with a local AI model.</p>
+      }
+    </div>
+
     <!-- Monthly summary table -->
     <div class="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
       <h2 class="text-sm font-semibold text-gray-600 mb-3">Monthly Summary</h2>

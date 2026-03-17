@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     admin_email: str = "admin@localhost"
     registration_enabled: bool = True
 
+    # AI
+    gemini_api_key: Optional[str] = None
+    ollama_url: str = "http://localhost:11434"
+    ollama_model: str = "phi3:mini"
+
     # Email (Yahoo SMTP)
     mail_user: Optional[str] = None
     mail_password: Optional[str] = None

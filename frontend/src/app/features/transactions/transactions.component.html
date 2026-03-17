@@ -93,8 +93,19 @@
         </div>
         <div class="sm:col-span-2">
           <label class="block text-xs text-gray-500 mb-1">Description</label>
-          <input type="text" [(ngModel)]="form.description" placeholder="Optional note..."
+          <input type="text" [ngModel]="form.description" (ngModelChange)="onDescriptionChange($event)"
+            name="description" placeholder="Optional note..."
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          @if (suggestedCategory()) {
+            <div class="flex items-center gap-2 mt-1.5">
+              <span class="text-xs text-gray-400">AI suggests:</span>
+              <button type="button" (click)="applySuggestion()"
+                class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors">
+                {{ suggestedCategory() }}
+              </button>
+              <button type="button" (click)="dismissSuggestion()" class="text-xs text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+          }
         </div>
       </div>
       <div class="flex gap-3 mt-4">

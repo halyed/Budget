@@ -4,6 +4,7 @@ import { TransactionsComponent } from './features/transactions/transactions.comp
 import { InvestmentsComponent } from './features/investments/investments.component';
 import { GoalsComponent } from './features/goals/goals.component';
 import { ReportsComponent } from './features/reports/reports.component';
+import { ChatComponent } from './features/chat/chat.component';
 import { LoginComponent } from './features/login/login.component';
 import { RegisterComponent } from './features/register/register.component';
 import { VerifyEmailComponent } from './features/verify-email/verify-email.component';
@@ -19,4 +20,5 @@ export const routes: Routes = [
   { path: 'investments',  component: InvestmentsComponent,  canActivate: [authGuard] },
   { path: 'goals',        component: GoalsComponent,        canActivate: [authGuard] },
   { path: 'reports',      component: ReportsComponent,      canActivate: [authGuard] },
+  { path: 'chat',         component: ChatComponent,         canActivate: [authGuard] },
 ];

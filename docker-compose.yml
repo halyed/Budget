@@ -6,6 +6,7 @@ services:
     environment:
       DATABASE_URL: sqlite:////app/data/budget.db
       ALLOWED_ORIGINS: "https://hbudget.duckdns.org"
+      OLLAMA_URL: "http://ollama:11434"
     volumes:
       - db_data:/app/data
     networks:
@@ -23,8 +24,18 @@ services:
       - internal
     restart: unless-stopped
 
+  ollama:
+    container_name: budget-ollama
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - internal
+    restart: unless-stopped
+
 volumes:
   db_data:
+  ollama_data:
 
 networks:
   web:

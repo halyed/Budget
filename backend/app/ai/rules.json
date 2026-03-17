@@ -1,0 +1,13 @@
+{
+  "food": ["carrefour", "lidl", "aldi", "leclerc", "intermarche", "monoprix", "franprix", "supermarche", "supermarket", "grocery", "groceries", "boulangerie", "bakery", "epicerie"],
+  "transport": ["sncf", "ratp", "navigo", "uber", "bolt", "taxi", "shell", "total", "bp", "essence", "carburant", "fuel", "parking", "autoroute", "toll", "train", "bus", "metro"],
+  "restaurant": ["restaurant", "brasserie", "bistro", "mcdonald", "burger", "pizza", "kebab", "sushi", "eating out", "deliveroo", "ubereats", "just eat"],
+  "health": ["pharmacie", "pharmacy", "medecin", "docteur", "doctor", "hopital", "hospital", "dentiste", "dentist", "mutuelle", "assurance sante", "health insurance", "opticien"],
+  "entertainment": ["netflix", "spotify", "amazon prime", "disney", "canal", "cinema", "theatre", "concert", "gaming", "steam", "playstation", "xbox"],
+  "utilities": ["edf", "engie", "electricite", "electricity", "gaz", "gas", "eau", "water", "internet", "sfr", "orange", "free", "bouygues", "telephone", "phone"],
+  "rent": ["loyer", "rent", "logement", "housing"],
+  "sport": ["salle de sport", "gym", "fitness", "sport", "swimming", "natation", "football", "tennis", "running"],
+  "education": ["livre", "book", "librairie", "bookstore", "formation", "cours", "course", "udemy", "coursera", "amazon book", "fnac"],
+  "savings": ["epargne", "saving", "livret", "virement", "transfer"],
+  "investment": ["bourse", "etf", "action", "stock", "crypto", "bitcoin", "trade", "invest"]
+}

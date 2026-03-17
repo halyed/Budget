@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
+import { AiService } from '../../core/services/ai.service';
 import { Transaction, TransactionCreate } from '../../core/models/transaction.model';
 import { Category } from '../../core/models/category.model';
 
@@ -24,6 +25,10 @@ export class TransactionsComponent implements OnInit {
   editForm: TransactionCreate = this.blank();
   form: TransactionCreate = this.blank();
 
+  // AI category suggestion
+  suggestedCategory = signal<string | null>(null);
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   // Bulk import
   showBulk    = signal(false);
   bulkMonth   = signal(new Date().toISOString().slice(0, 7));
@@ -35,6 +40,7 @@ export class TransactionsComponent implements OnInit {
   constructor(
     private transactionService: TransactionService,
     private categoryService: CategoryService,
+    private aiService: AiService,
   ) {}
 
   ngOnInit(): void {
@@ -134,6 +140,31 @@ export class TransactionsComponent implements OnInit {
         this.bulkLoading.set(false);
       },
     });
+  }
+
+  onDescriptionChange(value: string): void {
+    this.form.description = value;
+    this.suggestedCategory.set(null);
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    if (value.length < 3) return;
+    this.debounceTimer = setTimeout(() => {
+      this.aiService.suggestCategory(value).subscribe({
+        next: (res) => this.suggestedCategory.set(res.category),
+        error: () => {},
+      });
+    }, 500);
+  }
+
+  applySuggestion(): void {
+    const suggestion = this.suggestedCategory();
+    if (!suggestion) return;
+    const cat = this.categories().find(c => c.name === suggestion);
+    if (cat) this.form.category_id = cat.id;
+    this.suggestedCategory.set(null);
+  }
+
+  dismissSuggestion(): void {
+    this.suggestedCategory.set(null);
   }
 
   private exampleJson(): string {
