@@ -1,4 +1,10 @@
-# Replace with your actual domain. Caddy will obtain a Let's Encrypt cert automatically.
-your-domain.com {
-    reverse_proxy frontend:80
+# TODO: Replace :80 with your actual domain before deploying (e.g. budget.mysite.com)
+:80 {
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
 }

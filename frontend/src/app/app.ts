@@ -35,13 +35,7 @@ export class App {
   }
 
   get username(): string {
-    const token = this.authService.getToken();
-    if (!token) return '';
-    try {
-      return JSON.parse(atob(token.split('.')[1])).sub ?? '';
-    } catch {
-      return '';
-    }
+    return this.authService.currentUserEmail();
   }
 
   logout(): void {

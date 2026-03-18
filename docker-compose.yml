@@ -5,7 +5,7 @@ services:
     env_file: ./backend/.env
     environment:
       DATABASE_URL: sqlite:////app/data/budget.db
-      ALLOWED_ORIGINS: "https://hbudget.duckdns.org"
+      ALLOWED_ORIGINS: "https://hbudget.duckdns.org,http://localhost"
       OLLAMA_URL: "http://ollama:11434"
     volumes:
       - db_data:/app/data

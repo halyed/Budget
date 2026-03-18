@@ -27,12 +27,14 @@ export class AuthService {
   private readonly apiBase = environment.apiUrl;
 
   private _token = signal<string | null>(null);
+  private _email = signal<string>('');
 
   login(email: string, password: string): Observable<void> {
     return this.http
       .post<TokenResponse>(`${this.apiBase}/auth/login`, { email, password }, { withCredentials: true })
       .pipe(
         tap(res => this._token.set(res.access_token)),
+        tap(() => this._fetchMe()),
         map(() => void 0),
       );
   }
@@ -57,6 +59,7 @@ export class AuthService {
       .post<TokenResponse>(`${this.apiBase}/auth/refresh`, {}, { withCredentials: true })
       .pipe(
         tap(res => this._token.set(res.access_token)),
+        tap(() => this._fetchMe()),
         map(() => void 0),
       );
   }
@@ -89,8 +92,20 @@ export class AuthService {
     }
   }
 
+  currentUserEmail(): string {
+    return this._email();
+  }
+
+  private _fetchMe(): void {
+    this.http.get<UserResponse>(`${this.apiBase}/auth/me`).subscribe({
+      next: (user) => this._email.set(user.email),
+      error: () => {},
+    });
+  }
+
   private _clearAndRedirect(): void {
     this._token.set(null);
+    this._email.set('');
     this.router.navigate(['/login']);
   }
 }

@@ -85,15 +85,19 @@ def register(request: Request, body: RegisterRequest, db: Session = Depends(get_
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(status_code=409, detail="Email already registered")
 
+    is_active = settings.debug  # auto-activate in debug mode, require email verify in production
     user = User(
         username=body.email,
         email=body.email,
         password_hash=hash_password(body.password),
-        is_active=False,
+        is_active=is_active,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    if settings.debug:
+        return MessageResponse(message="Account created. You can sign in immediately (debug mode).")
 
     _create_and_send_verification(user, db)
 

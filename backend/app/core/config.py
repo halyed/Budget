@@ -11,8 +11,12 @@ class Settings(BaseSettings):
     admin_email: str = "admin@localhost"
     registration_enabled: bool = True
 
+    # Dev
+    debug: bool = False
+
     # AI
     gemini_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "phi3:mini"
 

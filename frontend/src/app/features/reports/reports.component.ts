@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, AfterViewInit,
+  Component, OnInit, OnDestroy, AfterViewChecked,
   ViewChild, ElementRef, signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -43,7 +43,7 @@ const CHART_COLORS = [
   imports: [CommonModule],
   templateUrl: './reports.component.html',
 })
-export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('incomeExpensesCanvas') incomeExpensesRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('savingsRateCanvas') savingsRateRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('categoryBreakdownCanvas') categoryBreakdownRef!: ElementRef<HTMLCanvasElement>;
@@ -65,8 +65,7 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   private charts: Chart[] = [];
-  private viewInitialized = false;
-  private dataLoaded = false;
+  private pendingRender = false;
 
   constructor(private api: ApiService, private aiService: AiService) {}
 
@@ -74,9 +73,10 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadData();
   }
 
-  ngAfterViewInit(): void {
-    this.viewInitialized = true;
-    if (this.dataLoaded && this.data()) {
+  // Fires after every DOM update — renders charts as soon as canvases are available
+  ngAfterViewChecked(): void {
+    if (this.pendingRender && this.incomeExpensesRef?.nativeElement) {
+      this.pendingRender = false;
       this.renderCharts();
     }
   }
@@ -117,11 +117,7 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
         next: (d) => {
           this.data.set(d);
           this.loading.set(false);
-          this.dataLoaded = true;
-          if (this.viewInitialized) {
-            // Wait one tick for *ngIf canvases to render
-            setTimeout(() => this.renderCharts(), 0);
-          }
+          this.pendingRender = true; // ngAfterViewChecked will render once canvases are in DOM
         },
         error: () => {
           this.error.set('Failed to load report data.');
@@ -205,7 +201,6 @@ export class ReportsComponent implements OnInit, AfterViewInit, OnDestroy {
   private renderCategoryBreakdown(d: ReportData): void {
     const ctx = this.categoryBreakdownRef?.nativeElement;
     if (!ctx) return;
-    // Use the most recent month's data
     const last = d.months[d.months.length - 1];
     const labels = d.category_trends.map(c => c.category_name);
     const amounts = d.category_trends.map(c => c.amounts[c.amounts.length - 1]);
