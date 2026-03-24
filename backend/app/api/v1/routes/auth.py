@@ -96,6 +96,9 @@ def register(request: Request, body: RegisterRequest, db: Session = Depends(get_
     db.commit()
     db.refresh(user)
 
+    from app.db.seed import seed
+    seed(user.id)
+
     if settings.debug:
         return MessageResponse(message="Account created. You can sign in immediately (debug mode).")
 
@@ -158,6 +161,9 @@ def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Please verify your email address before signing in.")
+
+    from app.db.seed import seed
+    seed(user.id)
 
     raw_refresh = _store_refresh_token(user.id, db)
     _set_refresh_cookie(response, raw_refresh)
