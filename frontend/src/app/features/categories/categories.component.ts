@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../core/services/category.service';
 import { Category, CategoryCreate } from '../../core/models/category.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './categories.component.html',
 })
 export class CategoriesComponent implements OnInit {

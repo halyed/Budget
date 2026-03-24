@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { MonthlySummary, BudgetVsActual, PortfolioSummary } from '../../core/models/dashboard.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CurrencyFormatPipe],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {

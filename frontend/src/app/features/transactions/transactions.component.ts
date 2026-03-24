@@ -6,11 +6,12 @@ import { CategoryService } from '../../core/services/category.service';
 import { AiService } from '../../core/services/ai.service';
 import { Transaction, TransactionCreate } from '../../core/models/transaction.model';
 import { Category } from '../../core/models/category.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './transactions.component.html',
 })
 export class TransactionsComponent implements OnInit {

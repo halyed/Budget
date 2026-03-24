@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InvestmentService } from '../../core/services/investment.service';
 import { Investment, InvestmentCreate } from '../../core/models/investment.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-investments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './investments.component.html',
 })
 export class InvestmentsComponent implements OnInit {

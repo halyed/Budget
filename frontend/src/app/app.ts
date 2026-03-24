@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './core/services/auth.service';
+import { CurrencyService, CURRENCIES } from './core/services/currency.service';
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,8 @@ import { AuthService } from './core/services/auth.service';
 })
 export class App {
   private authService = inject(AuthService);
+  currencyService = inject(CurrencyService);
+  currencies = CURRENCIES;
 
   navItems = [
     { path: '/dashboard',     label: 'Dashboard' },

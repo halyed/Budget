@@ -68,7 +68,7 @@
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+          <label class="block text-xs text-gray-500 mb-1">Amount</label>
           <input type="number" [(ngModel)]="form.amount" min="0" step="0.01"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
@@ -130,7 +130,7 @@
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
         </div>
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+          <label class="block text-xs text-gray-500 mb-1">Amount</label>
           <input type="number" [(ngModel)]="editForm.amount" min="0" step="0.01"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
         </div>
@@ -199,7 +199,7 @@
                 [class.text-green-600]="t.type === 'income'"
                 [class.text-red-500]="t.type === 'expense'"
                 [class.text-blue-600]="t.type === 'savings'">
-                {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
               </span>
               <span class="text-xs px-2 py-0.5 rounded-full mt-1"
                 [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
@@ -248,7 +248,7 @@
                 [class.text-green-600]="t.type === 'income'"
                 [class.text-red-500]="t.type === 'expense'"
                 [class.text-blue-600]="t.type === 'savings'">
-                {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
               </td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
                 <button (click)="startEdit(t)" class="text-gray-400 hover:text-amber-500 text-xs mr-2">Edit</button>

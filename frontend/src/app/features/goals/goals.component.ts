@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoalService } from '../../core/services/goal.service';
 import { SavingsGoal, GoalCreate } from '../../core/models/goal.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-goals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './goals.component.html',
 })
 export class GoalsComponent implements OnInit {
