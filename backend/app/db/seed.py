@@ -26,25 +26,25 @@ CATEGORIES = [
     {"name": "Eating Out",       "type": "variable", "planned_amount": 50,  "icon": "utensils",      "color": "#f59e0b"},
     # Learning
     {"name": "Claude Code",      "type": "learning", "planned_amount": 20,  "icon": "code",          "color": "#10b981"},
-    {"name": "DEV / PLM Books",  "type": "learning", "planned_amount": 50,  "icon": "book",          "color": "#10b981"},
-    {"name": "Networking",       "type": "learning", "planned_amount": 30,  "icon": "users",         "color": "#10b981"},
+    {"name": "DEV / PLM Books",  "type": "learning", "planned_amount": 30,  "icon": "book",          "color": "#10b981"},
+    {"name": "Networking",       "type": "learning", "planned_amount": 20,  "icon": "users",         "color": "#10b981"},
     # Family
-    {"name": "Family Abroad",    "type": "family",   "planned_amount": 150, "icon": "heart",         "color": "#ec4899"},
+    {"name": "Family Abroad",    "type": "family",   "planned_amount": 100, "icon": "heart",         "color": "#ec4899"},
 ]
 
 INVESTMENTS = [
-    {"name": "Stocks / ETFs",  "type": "stocks", "value": 15000.0},
-    {"name": "Emergency Cash", "type": "cash",   "value": 3000.0},
-    {"name": "Crypto",         "type": "crypto", "value": 390.0},
+    {"name": "Stocks / ETFs",  "type": "stocks", "value": 1000.0},
+    {"name": "Emergency Cash", "type": "cash",   "value": 500.0},
+    {"name": "Crypto",         "type": "crypto", "value": 100.0},
 ]
 
 GOALS = [
     {
-        "name": "€100k Portfolio by 35",
-        "description": "Reach €100k total portfolio value by age 35 via monthly €600 ETF contributions.",
-        "target_amount": 100000.0,
-        "current_amount": 18390.0,
-        "target_date": date(2031, 1, 1),
+        "name": "Investment Portfolio Goal",
+        "description": "Reach your portfolio target via regular monthly contributions.",
+        "target_amount": 10000.0,
+        "current_amount": 1600.0,
+        "target_date": date(2030, 1, 1),
     }
 ]
 
