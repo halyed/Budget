@@ -4,6 +4,7 @@ export interface MonthlySummary {
   total_income: number;
   total_expenses: number;
   saved: number;
+  net: number;
   savings_rate: number;
 }
 

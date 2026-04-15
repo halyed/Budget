@@ -1,263 +1,447 @@
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Transactions</h1>
-    <div class="flex gap-2">
-      <button (click)="openBulk()"
-        class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-50">
-        Bulk Import
-      </button>
-      <button (click)="showForm.set(!showForm()); editingId.set(null)"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
-        + Add Transaction
-      </button>
-    </div>
-  </div>
+<div class="p-6 space-y-8">
 
-  <!-- Bulk import modal -->
-  @if (showBulk()) {
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="showBulk.set(false)">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Bulk Import Transactions</h2>
-
-        <div class="mb-3">
-          <label class="block text-xs text-gray-500 mb-1">Month</label>
-          <input type="month" [ngModel]="bulkMonth()" (ngModelChange)="bulkMonth.set($event)"
-            class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-
-        <div class="mb-3">
-          <label class="block text-xs text-gray-500 mb-1">Transactions (JSON array)</label>
-          <textarea rows="10" [ngModel]="bulkJson()" (ngModelChange)="bulkJson.set($event)"
-            class="w-full border rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          </textarea>
-          <p class="text-xs text-gray-400 mt-1">Each item: description, amount, category_name, type (expense/income/savings), day</p>
-        </div>
-
-        @if (bulkError()) {
-          <p class="text-red-500 text-sm mb-3">{{ bulkError() }}</p>
-        }
-        @if (bulkResult()) {
-          <div class="text-sm mb-3 bg-gray-50 rounded-lg p-3">
-            <p class="text-green-600 font-medium">{{ bulkResult()!.created }} created, {{ bulkResult()!.skipped }} skipped</p>
-            @for (e of bulkResult()!.errors; track e) {
-              <p class="text-red-500 text-xs mt-1">{{ e }}</p>
-            }
-          </div>
-        }
-
-        <div class="flex gap-2 justify-end">
-          <button (click)="showBulk.set(false)"
-            class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Close</button>
-          <button (click)="submitBulk()" [disabled]="bulkLoading()"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-            {{ bulkLoading() ? 'Importing…' : 'Import' }}
+  <!-- ═══════════════ TRANSACTIONS ═══════════════ -->
+  <section>
+    <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+      <h1 class="text-2xl font-bold text-gray-800">Transactions</h1>
+      <div class="flex flex-wrap gap-2 items-center">
+        <!-- Month navigator -->
+        <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
+          <button (click)="prevMonth()"
+            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors" title="Previous month">
+            &#8592;
+          </button>
+          <span class="text-sm font-medium text-gray-700 px-2 min-w-32 text-center">{{ selectedLabel() }}</span>
+          <button (click)="nextMonth()" [disabled]="isCurrentMonth()"
+            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Next month">
+            &#8594;
           </button>
         </div>
+        <button (click)="openBulk()"
+          class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-50">
+          Bulk Import
+        </button>
+        <button (click)="showTxForm.set(!showTxForm()); editingTxId.set(null)"
+          class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+          + Add Transaction
+        </button>
       </div>
     </div>
-  }
 
-  <!-- Add form -->
-  @if (showForm()) {
-    <div class="bg-white rounded-xl shadow p-5 mb-6 border border-indigo-100">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">New Transaction</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Date</label>
-          <input type="date" [(ngModel)]="form.date"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Amount</label>
-          <input type="number" [(ngModel)]="form.amount" min="0" step="0.01"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Type</label>
-          <select [(ngModel)]="form.type"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-            <option value="savings">Savings</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Category</label>
-          <select [(ngModel)]="form.category_id"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-            <option [ngValue]="null">— None —</option>
-            @for (cat of categories(); track cat.id) {
-              <option [ngValue]="cat.id">{{ cat.name }}</option>
-            }
-          </select>
-        </div>
-        <div class="sm:col-span-2">
-          <label class="block text-xs text-gray-500 mb-1">Description</label>
-          <input type="text" [ngModel]="form.description" (ngModelChange)="onDescriptionChange($event)"
-            name="description" placeholder="Optional note..."
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          @if (suggestedCategory()) {
-            <div class="flex items-center gap-2 mt-1.5">
-              <span class="text-xs text-gray-400">AI suggests:</span>
-              <button type="button" (click)="applySuggestion()"
-                class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors">
-                {{ suggestedCategory() }}
-              </button>
-              <button type="button" (click)="dismissSuggestion()" class="text-xs text-gray-400 hover:text-gray-600">✕</button>
+    <!-- Bulk import modal -->
+    @if (showBulk()) {
+      <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="showBulk.set(false)">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Bulk Import Transactions</h2>
+          <div class="mb-3">
+            <label class="block text-xs text-gray-500 mb-1">Month</label>
+            <input type="month" [ngModel]="bulkMonth()" (ngModelChange)="bulkMonth.set($event)"
+              class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-xs text-gray-500 mb-1">Transactions (JSON array)</label>
+            <textarea rows="10" [ngModel]="bulkJson()" (ngModelChange)="bulkJson.set($event)"
+              class="w-full border rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            </textarea>
+            <p class="text-xs text-gray-400 mt-1">Each item: description, amount, category_name, type (expense/income/savings), day</p>
+          </div>
+          @if (bulkError()) {
+            <p class="text-red-500 text-sm mb-3">{{ bulkError() }}</p>
+          }
+          @if (bulkResult()) {
+            <div class="text-sm mb-3 bg-gray-50 rounded-lg p-3">
+              <p class="text-green-600 font-medium">{{ bulkResult()!.created }} created, {{ bulkResult()!.skipped }} skipped</p>
+              @for (e of bulkResult()!.errors; track e) {
+                <p class="text-red-500 text-xs mt-1">{{ e }}</p>
+              }
             </div>
           }
+          <div class="flex gap-2 justify-end">
+            <button (click)="showBulk.set(false)"
+              class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Close</button>
+            <button (click)="submitBulk()" [disabled]="bulkLoading()"
+              class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+              {{ bulkLoading() ? 'Importing…' : 'Import' }}
+            </button>
+          </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-4">
-        <button (click)="save()" [disabled]="saving()"
-          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-          {{ saving() ? 'Saving...' : 'Save' }}
-        </button>
-        <button (click)="showForm.set(false)"
-          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-      </div>
-    </div>
-  }
-
-  <!-- Edit form -->
-  @if (editingId() !== null) {
-    <div class="bg-white rounded-xl shadow p-5 mb-6 border border-amber-200">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Transaction</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Date</label>
-          <input type="date" [(ngModel)]="editForm.date"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Amount</label>
-          <input type="number" [(ngModel)]="editForm.amount" min="0" step="0.01"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Type</label>
-          <select [(ngModel)]="editForm.type"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-            <option value="savings">Savings</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Category</label>
-          <select [(ngModel)]="editForm.category_id"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-            <option [ngValue]="null">— None —</option>
-            @for (cat of categories(); track cat.id) {
-              <option [ngValue]="cat.id">{{ cat.name }}</option>
-            }
-          </select>
-        </div>
-        <div class="sm:col-span-2">
-          <label class="block text-xs text-gray-500 mb-1">Description</label>
-          <input type="text" [(ngModel)]="editForm.description"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-        </div>
-      </div>
-      @if (errorMsg()) {
-        <p class="mt-3 text-sm text-red-600 bg-red-50 rounded px-3 py-2">{{ errorMsg() }}</p>
-      }
-      <div class="flex gap-3 mt-4">
-        <button (click)="saveEdit()" [disabled]="saving()"
-          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-          {{ saving() ? 'Saving...' : 'Update' }}
-        </button>
-        <button (click)="cancelEdit()"
-          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-      </div>
-    </div>
-  }
-
-  <!-- Loading -->
-  @if (loading()) {
-    <div class="flex items-center gap-2 text-gray-400 text-sm py-12 justify-center">
-      <span class="animate-spin text-lg">⟳</span> Loading...
-    </div>
-  }
-
-  @if (!loading()) {
-    @if (transactions().length === 0) {
-      <p class="text-center text-gray-400 py-12">No transactions yet.</p>
     }
 
-    <!-- Mobile cards -->
-    <div class="md:hidden space-y-2">
-      @for (t of transactions(); track t.id) {
-        <div class="bg-white rounded-xl shadow px-4 py-3" [class.ring-2]="editingId() === t.id" [class.ring-amber-400]="editingId() === t.id">
-          <div class="flex justify-between items-start">
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800 truncate">{{ t.description || '—' }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ t.date }} · {{ t.category?.name || 'No category' }}</p>
-            </div>
-            <div class="flex flex-col items-end ml-3 shrink-0">
-              <span class="text-sm font-semibold"
-                [class.text-green-600]="t.type === 'income'"
-                [class.text-red-500]="t.type === 'expense'"
-                [class.text-blue-600]="t.type === 'savings'">
-                {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
-              </span>
-              <span class="text-xs px-2 py-0.5 rounded-full mt-1"
-                [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
-                [class.bg-red-100]="t.type === 'expense'" [class.text-red-700]="t.type === 'expense'"
-                [class.bg-blue-100]="t.type === 'savings'" [class.text-blue-700]="t.type === 'savings'">
-                {{ t.type }}
-              </span>
-            </div>
+    <!-- Add transaction form -->
+    @if (showTxForm()) {
+      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-indigo-100">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">New Transaction</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Date</label>
+            <input type="date" [(ngModel)]="form.date"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
-          <div class="flex gap-3 mt-2 pt-2 border-t border-gray-100">
-            <button (click)="startEdit(t)" class="text-xs text-amber-500 font-medium">Edit</button>
-            <button (click)="delete(t.id)" class="text-xs text-red-400 font-medium">Delete</button>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+            <input type="number" [(ngModel)]="form.amount" min="0" step="0.01"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <select [(ngModel)]="form.type"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+              <option value="savings">Savings</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Category</label>
+            <select [(ngModel)]="form.category_id"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option [ngValue]="null">— None —</option>
+              @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-500 mb-1">Description</label>
+            <input type="text" [ngModel]="form.description" (ngModelChange)="onDescriptionChange($event)"
+              placeholder="Optional note..."
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            @if (suggestedCategory()) {
+              <div class="flex items-center gap-2 mt-1.5">
+                <span class="text-xs text-gray-400">AI suggests:</span>
+                <button type="button" (click)="applySuggestion()"
+                  class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors">
+                  {{ suggestedCategory() }}
+                </button>
+                <button type="button" (click)="dismissSuggestion()" class="text-xs text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+            }
           </div>
         </div>
+        <div class="flex gap-3 mt-4">
+          <button (click)="saveTx()" [disabled]="savingTx()"
+            class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+            {{ savingTx() ? 'Saving...' : 'Save' }}
+          </button>
+          <button (click)="showTxForm.set(false)"
+            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+      </div>
+    }
+
+    <!-- Edit transaction form -->
+    @if (editingTxId() !== null) {
+      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-amber-200">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Transaction</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Date</label>
+            <input type="date" [(ngModel)]="editTxForm.date"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+            <input type="number" [(ngModel)]="editTxForm.amount" min="0" step="0.01"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <select [(ngModel)]="editTxForm.type"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+              <option value="savings">Savings</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Category</label>
+            <select [(ngModel)]="editTxForm.category_id"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+              <option [ngValue]="null">— None —</option>
+              @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-500 mb-1">Description</label>
+            <input type="text" [(ngModel)]="editTxForm.description"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+        </div>
+        @if (errorMsg()) {
+          <p class="mt-3 text-sm text-red-600 bg-red-50 rounded px-3 py-2">{{ errorMsg() }}</p>
+        }
+        <div class="flex gap-3 mt-4">
+          <button (click)="saveEditTx()" [disabled]="savingTx()"
+            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+            {{ savingTx() ? 'Saving...' : 'Update' }}
+          </button>
+          <button (click)="cancelEditTx()"
+            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (loadingTx()) {
+      <div class="flex items-center gap-2 text-gray-400 text-sm py-10 justify-center">
+        <span class="animate-spin text-lg">⟳</span> Loading...
+      </div>
+    }
+
+    @if (!loadingTx()) {
+      @if (transactions().length === 0) {
+        <p class="text-center text-gray-400 py-10">No transactions for {{ selectedLabel() }}.</p>
+      } @else {
+
+        <!-- Mobile cards -->
+        <div class="md:hidden space-y-2">
+          @for (t of visibleTransactions(); track t.id) {
+            <div class="bg-white rounded-xl shadow px-4 py-3"
+              [class.ring-2]="editingTxId() === t.id" [class.ring-amber-400]="editingTxId() === t.id">
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-800 truncate">{{ t.description || '—' }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{ t.date }} · {{ t.category?.name || 'No category' }}</p>
+                </div>
+                <div class="flex flex-col items-end ml-3 shrink-0">
+                  <span class="text-sm font-semibold"
+                    [class.text-green-600]="t.type === 'income'"
+                    [class.text-red-500]="t.type === 'expense'"
+                    [class.text-blue-600]="t.type === 'savings'">
+                    {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                  </span>
+                  <span class="text-xs px-2 py-0.5 rounded-full mt-1"
+                    [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
+                    [class.bg-red-100]="t.type === 'expense'" [class.text-red-700]="t.type === 'expense'"
+                    [class.bg-blue-100]="t.type === 'savings'" [class.text-blue-700]="t.type === 'savings'">
+                    {{ t.type }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex gap-3 mt-2 pt-2 border-t border-gray-100">
+                <button (click)="startEditTx(t)" class="text-xs text-amber-500 font-medium">Edit</button>
+                <button (click)="deleteTx(t.id)" class="text-xs text-red-400 font-medium">Delete</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden md:block bg-white rounded-xl shadow overflow-hidden">
+          <div class="max-h-80 overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 sticky top-0">
+                <tr class="text-left text-gray-500">
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Description</th>
+                  <th class="px-4 py-3">Category</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3 text-right">Amount</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of visibleTransactions(); track t.id) {
+                  <tr class="border-t hover:bg-gray-50" [class.bg-amber-50]="editingTxId() === t.id">
+                    <td class="px-4 py-3 text-gray-500">{{ t.date }}</td>
+                    <td class="px-4 py-3 text-gray-700">{{ t.description || '—' }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ t.category?.name || '—' }}</td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-1 rounded-full text-xs font-medium"
+                        [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
+                        [class.bg-red-100]="t.type === 'expense'" [class.text-red-700]="t.type === 'expense'"
+                        [class.bg-blue-100]="t.type === 'savings'" [class.text-blue-700]="t.type === 'savings'">
+                        {{ t.type }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-medium"
+                      [class.text-green-600]="t.type === 'income'"
+                      [class.text-red-500]="t.type === 'expense'"
+                      [class.text-blue-600]="t.type === 'savings'">
+                      {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                      <button (click)="startEditTx(t)" class="text-gray-400 hover:text-amber-500 text-xs mr-2">Edit</button>
+                      <button (click)="deleteTx(t.id)" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Show all / show less toggle -->
+          @if (transactions().length > 5) {
+            <div class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
+              <button (click)="showAllTx.set(!showAllTx())"
+                class="text-xs text-indigo-600 font-medium hover:underline">
+                {{ showAllTx() ? 'Show less' : 'Show all ' + transactions().length + ' transactions' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Mobile show all toggle -->
+        @if (transactions().length > 5) {
+          <div class="md:hidden text-center mt-2">
+            <button (click)="showAllTx.set(!showAllTx())"
+              class="text-xs text-indigo-600 font-medium hover:underline">
+              {{ showAllTx() ? 'Show less' : 'Show all ' + transactions().length + ' transactions' }}
+            </button>
+          </div>
+        }
       }
+    }
+  </section>
+
+  <!-- ═══════════════ DIVIDER ═══════════════ -->
+  <hr class="border-gray-200" />
+
+  <!-- ═══════════════ CATEGORIES ═══════════════ -->
+  <section>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">Categories</h2>
+      <button (click)="showCatForm.set(!showCatForm()); editingCatId.set(null)"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+        + Add Category
+      </button>
     </div>
 
-    <!-- Desktop table -->
-    <div class="hidden md:block bg-white rounded-xl shadow overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left text-gray-500">
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3">Description</th>
-            <th class="px-4 py-3">Category</th>
-            <th class="px-4 py-3">Type</th>
-            <th class="px-4 py-3 text-right">Amount</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (t of transactions(); track t.id) {
-            <tr class="border-t hover:bg-gray-50" [class.bg-amber-50]="editingId() === t.id">
-              <td class="px-4 py-3 text-gray-500">{{ t.date }}</td>
-              <td class="px-4 py-3 text-gray-700">{{ t.description || '—' }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ t.category?.name || '—' }}</td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded-full text-xs font-medium"
-                  [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
-                  [class.bg-red-100]="t.type === 'expense'" [class.text-red-700]="t.type === 'expense'"
-                  [class.bg-blue-100]="t.type === 'savings'" [class.text-blue-700]="t.type === 'savings'">
-                  {{ t.type }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right font-medium"
-                [class.text-green-600]="t.type === 'income'"
-                [class.text-red-500]="t.type === 'expense'"
-                [class.text-blue-600]="t.type === 'savings'">
-                {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
-              </td>
-              <td class="px-4 py-3 text-right whitespace-nowrap">
-                <button (click)="startEdit(t)" class="text-gray-400 hover:text-amber-500 text-xs mr-2">Edit</button>
-                <button (click)="delete(t.id)" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
-              </td>
-            </tr>
+    <!-- Add category form -->
+    @if (showCatForm()) {
+      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-indigo-100">
+        <h3 class="text-base font-semibold text-gray-700 mb-4">New Category</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Name</label>
+            <input type="text" [(ngModel)]="catForm.name" placeholder="e.g. Rent"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <select [(ngModel)]="catForm.type"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              @for (t of catTypes; track t) {
+                <option [value]="t">{{ t | titlecase }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Planned Amount (€)</label>
+            <input type="number" [(ngModel)]="catForm.planned_amount" min="0" step="0.01"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Icon</label>
+            <input type="text" [(ngModel)]="catForm.icon" placeholder="e.g. tag"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Color</label>
+            <input type="color" [(ngModel)]="catForm.color"
+              class="h-10 w-full border rounded-lg px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button (click)="saveCat()" [disabled]="savingCat()"
+            class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+            {{ savingCat() ? 'Saving...' : 'Save' }}
+          </button>
+          <button (click)="showCatForm.set(false)"
+            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+      </div>
+    }
+
+    <!-- Edit category form -->
+    @if (editingCatId() !== null) {
+      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-amber-200">
+        <h3 class="text-base font-semibold text-gray-700 mb-4">Edit Category</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Name</label>
+            <input type="text" [(ngModel)]="editCatForm.name"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <select [(ngModel)]="editCatForm.type"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+              @for (t of catTypes; track t) {
+                <option [value]="t">{{ t | titlecase }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Planned Amount (€)</label>
+            <input type="number" [(ngModel)]="editCatForm.planned_amount" min="0" step="0.01"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Icon</label>
+            <input type="text" [(ngModel)]="editCatForm.icon"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Color</label>
+            <input type="color" [(ngModel)]="editCatForm.color"
+              class="h-10 w-full border rounded-lg px-1 py-1 focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button (click)="saveEditCat()" [disabled]="savingCat()"
+            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+            {{ savingCat() ? 'Saving...' : 'Update' }}
+          </button>
+          <button (click)="cancelEditCat()"
+            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (loadingCat()) {
+      <div class="flex items-center gap-2 text-gray-400 text-sm py-10 justify-center">
+        <span class="animate-spin text-lg">⟳</span> Loading...
+      </div>
+    }
+
+    @if (!loadingCat()) {
+      @if (categories().length === 0) {
+        <p class="text-center text-gray-400 py-10">No categories yet. Add one to get started.</p>
+      } @else {
+        <div class="max-h-96 overflow-y-auto space-y-4 pr-1">
+          @for (type of catTypes; track type) {
+            @if (grouped()[type].length > 0) {
+              <div>
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ type | titlecase }}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  @for (cat of grouped()[type]; track cat.id) {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex items-center justify-between"
+                      [class.ring-2]="editingCatId() === cat.id" [class.ring-amber-400]="editingCatId() === cat.id">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" [style.background]="cat.color"></span>
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium text-gray-700 truncate">{{ cat.name }}</p>
+                          <p class="text-xs text-gray-400">€{{ cat.planned_amount | number:'1.2-2' }} planned</p>
+                        </div>
+                      </div>
+                      <div class="flex gap-2 ml-3 shrink-0">
+                        <button (click)="startEditCat(cat)" class="text-gray-400 hover:text-amber-500 text-xs">Edit</button>
+                        <button (click)="deleteCat(cat.id)" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           }
-        </tbody>
-      </table>
-    </div>
-  }
+        </div>
+      }
+    }
+  </section>
+
 </div>

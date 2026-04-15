@@ -1,6 +1,15 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, computed_field
+
+
+class LinkedInvestment(BaseModel):
+    id: int
+    name: str
+    type: str
+    value: float
+
+    model_config = {"from_attributes": True}
 
 
 class GoalBase(BaseModel):
@@ -11,8 +20,12 @@ class GoalBase(BaseModel):
     target_date: Optional[date] = None
 
 
-class GoalCreate(GoalBase):
-    pass
+class GoalCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    target_amount: float
+    target_date: Optional[date] = None
+    investment_ids: List[int] = []
 
 
 class GoalUpdate(BaseModel):
@@ -21,10 +34,17 @@ class GoalUpdate(BaseModel):
     target_amount: Optional[float] = None
     current_amount: Optional[float] = None
     target_date: Optional[date] = None
+    investment_ids: Optional[List[int]] = None
 
 
-class GoalRead(GoalBase):
+class GoalRead(BaseModel):
     id: int
+    name: str
+    description: Optional[str] = None
+    target_amount: float
+    current_amount: float
+    target_date: Optional[date] = None
+    linked_investments: List[LinkedInvestment] = []
 
     @computed_field
     @property

@@ -44,86 +44,108 @@
 
     </div>
 
-    <!-- Row 2: Category Breakdown + Category Trends -->
+    <!-- Middle: left = titles + navigator | right = AI Insights card -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Left: section label + month navigator on same line -->
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Category Breakdown &amp; Cash Flow</span>
+        <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
+          <button (click)="prevChartMonth()" [disabled]="isFirstChartMonth()"
+            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+            &#8592;
+          </button>
+          <span class="text-sm font-medium text-gray-700 px-2 min-w-28 text-center">{{ chartMonthLabel() }}</span>
+          <button (click)="nextChartMonth()" [disabled]="isLastChartMonth()"
+            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+            &#8594;
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: AI Insights card -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-600">AI Spending Insights</h2>
+          <button (click)="getInsights()" [disabled]="insightsLoading()"
+            class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+            {{ insightsLoading() ? 'Analysing…' : 'Get AI Insights' }}
+          </button>
+        </div>
+        @if (insightsLoading()) {
+          <div class="flex items-center gap-2 text-gray-400 text-sm py-4">
+            <span class="animate-spin">⟳</span> Phi-3 Mini is thinking…
+          </div>
+        } @else if (insightsError()) {
+          <p class="text-red-500 text-sm">{{ insightsError() }}</p>
+        } @else if (insightsText()) {
+          <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-indigo-50 rounded-xl p-4">
+            {{ insightsText() }}
+          </div>
+        } @else {
+          <p class="text-gray-400 text-sm">Click "Get AI Insights" to analyse your spending with a local AI model.</p>
+        }
+      </div>
+
+    </div>
+
+    <!-- Row 2: Category Breakdown + Cash Flow -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
       <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h2 class="text-sm font-semibold text-gray-600 mb-3">Category Breakdown (latest month)</h2>
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Category Breakdown</h2>
         @if (data()!.category_trends.length === 0) {
           <p class="text-gray-400 text-sm mt-8 text-center">No expense data yet.</p>
         } @else {
-          <div class="h-56">
-            <canvas #categoryBreakdownCanvas></canvas>
+          <div class="flex gap-4 items-start">
+            <div class="h-48 w-48 flex-shrink-0">
+              <canvas #categoryBreakdownCanvas></canvas>
+            </div>
+            <div class="flex-1 overflow-y-auto max-h-48">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th class="pb-1 text-left font-medium">Category</th>
+                    <th class="pb-1 text-right font-medium">Amount</th>
+                    <th class="pb-1 text-right font-medium">% Income</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of getCategoryBreakdown(); track row.name) {
+                    <tr class="border-b border-gray-50">
+                      <td class="py-1 flex items-center gap-1.5">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="row.color"></span>
+                        <span class="text-gray-700 truncate">{{ row.name }}</span>
+                      </td>
+                      <td class="py-1 text-right text-gray-700">{{ row.amount | number:'1.2-2' }}</td>
+                      <td class="py-1 text-right font-medium"
+                          [class.text-red-500]="row.pct > 20"
+                          [class.text-amber-500]="row.pct > 10 && row.pct <= 20"
+                          [class.text-gray-600]="row.pct <= 10">
+                        {{ row.pct }}%
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
         }
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h2 class="text-sm font-semibold text-gray-600 mb-3">Category Trends</h2>
-        @if (data()!.category_trends.length === 0) {
-          <p class="text-gray-400 text-sm mt-8 text-center">No expense data yet.</p>
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Cash Flow</h2>
+        @if (data()!.category_trends.length === 0 && data()!.months[selectedChartMonthIdx()].income === 0) {
+          <p class="text-gray-400 text-sm mt-8 text-center">No data yet.</p>
         } @else {
-          <div class="h-56">
-            <canvas #categoryTrendsCanvas></canvas>
+          <div class="h-64">
+            <canvas #cashflowCanvas></canvas>
           </div>
         }
       </div>
 
     </div>
 
-    <!-- AI Insights -->
-    <div class="bg-white rounded-2xl shadow-sm p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-gray-600">AI Spending Insights</h2>
-        <button (click)="getInsights()" [disabled]="insightsLoading()"
-          class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-          {{ insightsLoading() ? 'Analysing…' : 'Get AI Insights' }}
-        </button>
-      </div>
-
-      @if (insightsLoading()) {
-        <div class="flex items-center gap-2 text-gray-400 text-sm py-4">
-          <span class="animate-spin">⟳</span> Phi-3 Mini is thinking…
-        </div>
-      } @else if (insightsError()) {
-        <p class="text-red-500 text-sm">{{ insightsError() }}</p>
-      } @else if (insightsText()) {
-        <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-indigo-50 rounded-xl p-4">
-          {{ insightsText() }}
-        </div>
-      } @else {
-        <p class="text-gray-400 text-sm">Click "Get AI Insights" to analyse your spending with a local AI model.</p>
-      }
-    </div>
-
-    <!-- Monthly summary table -->
-    <div class="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
-      <h2 class="text-sm font-semibold text-gray-600 mb-3">Monthly Summary</h2>
-      <table class="w-full text-sm text-left">
-        <thead>
-          <tr class="border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wide">
-            <th class="pb-2 pr-4">Month</th>
-            <th class="pb-2 pr-4 text-right">Income</th>
-            <th class="pb-2 pr-4 text-right">Expenses</th>
-            <th class="pb-2 pr-4 text-right">Saved</th>
-            <th class="pb-2 text-right">Savings Rate</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (m of data()!.months; track m.label) {
-            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-              <td class="py-2 pr-4 font-medium text-gray-700">{{ m.label }}</td>
-              <td class="py-2 pr-4 text-right text-green-600">{{ m.income | number:'1.2-2' }}</td>
-              <td class="py-2 pr-4 text-right text-red-500">{{ m.expenses | number:'1.2-2' }}</td>
-              <td class="py-2 pr-4 text-right" [class.text-green-600]="m.savings >= 0" [class.text-red-500]="m.savings < 0">
-                {{ m.savings | number:'1.2-2' }}
-              </td>
-              <td class="py-2 text-right text-indigo-600 font-medium">{{ m.savings_rate }}%</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
 
   }
 </div>

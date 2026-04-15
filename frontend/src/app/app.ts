@@ -20,9 +20,7 @@ export class App {
     { path: '/transactions',  label: 'Transactions' },
     { path: '/categories',    label: 'Categories' },
     { path: '/investments',   label: 'Investments' },
-    { path: '/goals',         label: 'Goals' },
     { path: '/reports',       label: 'Reports' },
-    { path: '/chat',          label: 'AI Chat' },
   ];
 
   // Change-password modal state
