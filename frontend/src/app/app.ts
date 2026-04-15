@@ -15,9 +15,8 @@ export class App {
   navItems = [
     { path: '/dashboard',     label: 'Dashboard' },
     { path: '/transactions',  label: 'Transactions' },
-    { path: '/investments',   label: 'Investments & Goals' },
+    { path: '/investments',   label: 'Investments' },
     { path: '/reports',       label: 'Reports' },
-    { path: '/chat',          label: 'AI Chat' },
   ];
 
   // Change-password modal state

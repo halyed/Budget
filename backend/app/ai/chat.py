@@ -32,9 +32,9 @@ def _build_snapshot(db: Session, user: User) -> str:
         extract("year", Transaction.date) == year,
         extract("month", Transaction.date) == month,
     )
-    income = base.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    expenses = base.filter(Transaction.type.in_(["expense", "savings"])).with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    saved = income - expenses
+    income   = base.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
+    expenses = base.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
+    saved    = base.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
 
     goals = db.query(SavingsGoal).filter(SavingsGoal.user_id == user.id).all()
 
@@ -56,11 +56,14 @@ def _build_snapshot(db: Session, user: User) -> str:
             cat_spending.append((cat.name, total))
     cat_spending.sort(key=lambda x: x[1], reverse=True)
 
+    net = income - expenses - saved
+
     lines = [
         f"=== Financial Snapshot ({today.strftime('%B %Y')}) ===",
         f"Income this month: {income:.2f}€",
         f"Expenses this month: {expenses:.2f}€",
         f"Saved this month: {saved:.2f}€",
+        f"Available (unallocated) this month: {net:.2f}€",
         f"Savings rate: {round(saved / income * 100, 1) if income > 0 else 0}%",
     ]
 

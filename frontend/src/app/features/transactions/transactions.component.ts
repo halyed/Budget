@@ -54,14 +54,14 @@ export class TransactionsComponent implements OnInit {
   prevMonth(): void {
     if (this.selectedMonth() === 1) { this.selectedMonth.set(12); this.selectedYear.update(y => y - 1); }
     else { this.selectedMonth.update(m => m - 1); }
-    this.loadTransactions();
+    this.loadTransactions(false);
   }
 
   nextMonth(): void {
     if (this.isCurrentMonth()) return;
     if (this.selectedMonth() === 12) { this.selectedMonth.set(1); this.selectedYear.update(y => y + 1); }
     else { this.selectedMonth.update(m => m + 1); }
-    this.loadTransactions();
+    this.loadTransactions(false);
   }
 
   // Bulk import
@@ -104,8 +104,8 @@ export class TransactionsComponent implements OnInit {
 
   // ── Transaction methods ───────────────────────────────────────
 
-  loadTransactions(): void {
-    this.loadingTx.set(true);
+  loadTransactions(initialLoad = true): void {
+    if (initialLoad) this.loadingTx.set(true);
     this.showAllTx.set(false);
     this.transactionService.list({ month: this.selectedMonth(), year: this.selectedYear() }).subscribe(t => {
       this.transactions.set(t);

@@ -2,7 +2,7 @@
 
 Personal finance tracker — multi-user web app accessible from any browser. Tracks monthly income/expenses, categories, investments, savings goals, reports and an AI finance assistant.
 
-Live at: **https://hbudget.duckdns.org**
+Live at: **https://budget.halyed.com**
 
 ---
 
@@ -48,7 +48,7 @@ All services run as Docker containers on a shared `web` Docker network managed b
 
 | Layer | Technology |
 |---|---|
-| Frontend | Angular 21, Tailwind CSS, Chart.js |
+| Frontend | Angular 21, Tailwind CSS, Chart.js, chartjs-chart-sankey |
 | Backend | FastAPI (Python 3.12), SQLAlchemy 2, Alembic |
 | Database | SQLite |
 | Auth | JWT (python-jose), bcrypt, HttpOnly refresh tokens |
@@ -85,7 +85,8 @@ Budget/
 │   │       ├── 001_add_multi_user_support.py
 │   │       ├── 002_add_verification_tokens.py
 │   │       ├── 003_fix_categories_unique_constraint.py
-│   │       └── 004_fix_categories_drop_name_unique.py
+│   │       ├── 004_fix_categories_drop_name_unique.py
+│   │       └── 005_add_goal_investments_junction.py  ← goal ↔ investment many-to-many
 │   └── app/
 │       ├── main.py                  # FastAPI app, lifespan (migrations + admin bootstrap)
 │       ├── core/
@@ -100,7 +101,7 @@ Budget/
 │       │   ├── category.py
 │       │   ├── transaction.py
 │       │   ├── investment.py
-│       │   ├── goal.py
+│       │   ├── goal.py              # includes goal_investments junction table
 │       │   ├── refresh_token.py
 │       │   └── verification_token.py
 │       ├── schemas/
@@ -108,16 +109,16 @@ Budget/
 │       │   ├── category.py
 │       │   ├── transaction.py
 │       │   ├── investment.py
-│       │   └── goal.py
+│       │   └── goal.py              # GoalCreate/Update accept investment_ids[]; GoalRead returns linked_investments
 │       ├── api/v1/
 │       │   ├── router.py
 │       │   └── routes/
 │       │       ├── auth.py          # register, login, verify-email, refresh, logout, me, change-password
-│       │       ├── dashboard.py     # summary, budget-vs-actual, portfolio, goals
+│       │       ├── dashboard.py     # summary (with net), budget-vs-actual, portfolio, goals
 │       │       ├── categories.py
 │       │       ├── transactions.py  # CRUD + bulk import
 │       │       ├── investments.py
-│       │       ├── goals.py
+│       │       ├── goals.py         # CRUD with investment linking
 │       │       ├── reports.py       # monthly-summary (multi-month trends)
 │       │       └── ai.py            # suggest-category, insights, chat
 │       ├── ai/
@@ -131,8 +132,8 @@ Budget/
 └── frontend/
     ├── Dockerfile                   # node build → nginx (2-stage)
     └── src/app/
-        ├── app.ts / app.html        # root: sidebar, currency selector, change-password modal
-        ├── app.routes.ts            # routes with authGuard
+        ├── app.ts / app.html        # root: sidebar (hidden when unauthenticated), change-password modal
+        ├── app.routes.ts            # routes with authGuard (/categories → /transactions, /goals → /investments)
         ├── app.config.ts            # provideHttpClient + APP_INITIALIZER (session restore)
         ├── core/
         │   ├── services/
@@ -141,7 +142,7 @@ Budget/
         │   │   ├── currency.service.ts  # user currency preference (localStorage)
         │   │   └── ...
         │   ├── pipes/
-        │   │   └── currency-format.pipe.ts  # formats amounts with selected currency
+        │   │   └── currency-format.pipe.ts  # formats amounts with selected currency symbol
         │   ├── interceptors/
         │   │   └── auth.interceptor.ts  # Bearer token + silent 401 refresh
         │   └── guards/
@@ -150,13 +151,12 @@ Budget/
             ├── login/
             ├── register/            # with password strength indicator
             ├── verify-email/
-            ├── dashboard/
-            ├── transactions/        # CRUD + bulk import
-            ├── categories/          # manage categories + planned amounts
-            ├── investments/
-            ├── goals/
-            ├── reports/             # multi-month trend charts
-            └── chat/                # AI finance assistant
+            ├── dashboard/           # includes floating AI chatbot widget (bottom-right)
+            ├── transactions/        # transactions + categories merged into one page
+            ├── categories/          # component kept; route redirects to /transactions
+            ├── investments/         # goals (top) + investments (bottom) on one page
+            ├── reports/             # multi-month charts + Sankey cashflow + AI insights
+            └── chat/                # chat component (logic embedded in dashboard widget)
 ```
 
 ---
@@ -168,34 +168,59 @@ Budget/
 - **Email verification** — new accounts require email confirmation before login
 - **Secure auth** — 15-min access tokens + 30-day HttpOnly refresh tokens
 - **Rate limiting** — 3 registrations/hour, 5 login attempts/minute
+- **Nav hidden when logged out** — sidebar and hamburger menu are not shown on login/register pages
 
-### Budget Management
+### Transactions & Categories (one page)
 - **Transactions** — income, expense, savings with category assignment
-- **Bulk import** — import a full month via JSON
-- **Categories** — custom categories with planned amounts, grouped by type (fixed, variable, learning, family)
-- **Budget vs Actual** — planned vs spent per category on dashboard
+- **Month navigation** — ← → buttons next to the action buttons; defaults to current month; silently refreshes without loading flash
+- **Compact list** — shows last 5 transactions by default; "Show all N" toggle expands the full scrollable list
+- **Bulk import** — import a full month via JSON array
+- **AI category suggestion** — as you type a description, a rule-based suggestion appears instantly
+- **Categories** — managed directly below transactions on the same page
+  - Grouped by type: fixed, variable, learning, family
+  - Each category has a name, planned amount, color, and icon
+  - Scrollable list (max height, no page change needed)
 
-### Investments & Goals
-- **Investments** — track stocks, ETFs, crypto, cash, real estate
-- **Savings goals** — track progress toward financial targets
+### Dashboard
+- **Monthly summary cards** — Income, Expenses, Available (income − expenses − savings), Savings Rate
+- **Budget vs Actual** — sorted with most overbudget categories first; shows top 10 by default with "Show all" toggle
+  - Green = under budget, grey = on budget, red = over budget
+- **Portfolio overview** — total investment value with breakdown
+- **Floating AI chatbot** — 💬 button fixed at bottom-right; expands into a full chat panel with hint suggestions, message history, and clear button
+
+### Investments & Goals (one page)
+- **Goals** — shown at the top; each goal can link to multiple investments
+  - Linked investments are selected via toggle chips in the add/edit form
+  - `current_amount` is automatically computed as the sum of linked investment values
+  - Goal card shows each linked investment (type · name · value) as chips
+  - Progress bar turns green with "Goal reached!" at 100%
+  - Unlinked goals keep a manual `current_amount`
+- **Investments** — shown below goals; track stocks, ETFs, crypto, cash, real estate
+  - Updating or deleting an investment automatically refreshes goal progress
 
 ### Reports
-- **Monthly trends** — income/expenses/savings rate over up to 24 months
-- **Category trends** — spending per category over time (Chart.js)
+- **Period selector** — last 3, 6, or 12 months (defaults to 3); silently refreshes without full page reload
+- **Income vs Expenses** — grouped bar chart
+- **Savings Rate** — line chart; hover tooltip shows percentage + euro amount (e.g. "22% (€500.00)")
+- **Category Breakdown** — doughnut chart + table showing spend per category as amount and % of income
+- **Cash Flow (Sankey)** — river-flow diagram: income → expense categories → savings
+- **Month navigator** — independently navigate breakdown and cashflow charts (← month →)
+- **AI Spending Insights** — on-demand analysis generated by Ollama (local phi3:mini)
 
 ### AI Features
-- **Auto-categorization** — suggests category based on transaction description (rule-based, no external API)
-- **Spending insights** — AI-generated bullet points using Ollama (local, requires phi3:mini)
-- **Finance chat** — Groq-powered assistant with full financial context:
-  - Current month summary
-  - Budget vs actual per category
-  - Last 30 transactions
-  - Last 3 months history
-  - Goals and investments
+- **Auto-categorization** — rule-based instant suggestion while typing a transaction description
+- **Spending insights** — AI bullet points via Ollama (local, requires phi3:mini model)
+- **AI Financial Advisor** — floating chatbot on the dashboard, powered by Groq (llama-3.3-70b)
+  - Financial snapshot sent with every message:
+    - Income, expenses, savings, available (net), savings rate
+    - Top spending categories
+    - Goals with progress
+    - Investments
+  - All amounts correctly separated: savings = savings transactions, available = income − expenses − savings
 
 ### UX
 - **Currency selector** — choose €, FCFA, $, £, ₦, ¥ — persists in browser
-- **Responsive** — works on mobile and desktop
+- **Responsive** — works on mobile and desktop; chat input uses `dvh` for correct mobile viewport
 - **Auto-seed** — new users get default categories on first login
 
 ---
@@ -247,7 +272,7 @@ Create `backend/.env` from `.env.example`:
 DATABASE_URL=sqlite:///./budget.db
 
 # CORS
-ALLOWED_ORIGINS=https://your-domain.com
+ALLOWED_ORIGINS=https://budget.halyed.com,http://localhost
 
 # JWT secret — generate with:
 # python -c "import secrets; print(secrets.token_hex(32))"
@@ -278,7 +303,7 @@ MAIL_HOST=smtp.mail.yahoo.com
 MAIL_PORT=587
 
 # Public URL (used in verification email links)
-APP_URL=https://your-domain.com
+APP_URL=https://budget.halyed.com
 ```
 
 ---
@@ -320,10 +345,12 @@ Base URL: `/api/v1` — all endpoints except `/auth/*` require `Authorization: B
 
 | Method | Path | Params | Description |
 |---|---|---|---|
-| `GET` | `/dashboard/summary` | `month`, `year` | Income, expenses, saved, savings rate |
+| `GET` | `/dashboard/summary` | `month`, `year` | Income, expenses, saved, net (available), savings rate |
 | `GET` | `/dashboard/budget-vs-actual` | `month`, `year` | Planned vs actual per category |
 | `GET` | `/dashboard/portfolio` | — | Total portfolio + breakdown |
 | `GET` | `/dashboard/goals` | — | Goals with progress |
+
+> Savings rate = savings transactions ÷ income. `net` = income − expenses − savings.
 
 ### Categories
 
@@ -374,24 +401,36 @@ Types: `stocks`, `etf`, `crypto`, `cash`, `real_estate`
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/goals` | List all |
-| `POST` | `/goals` | Create |
-| `PATCH` | `/goals/{id}` | Update |
+| `GET` | `/goals` | List all (with linked investments) |
+| `POST` | `/goals` | Create (accepts `investment_ids: []`) |
+| `PATCH` | `/goals/{id}` | Update (accepts `investment_ids: []`) |
 | `DELETE` | `/goals/{id}` | Delete |
+
+`GoalRead` response includes:
+- `linked_investments` — list of `{id, name, type, value}` objects
+- `current_amount` — sum of linked investment values (or manual value if none linked)
+- `progress_pct` — computed as `current_amount / target_amount * 100`
 
 ### Reports
 
 | Method | Path | Params | Description |
 |---|---|---|---|
-| `GET` | `/reports/monthly-summary` | `months` (1-24) | Multi-month income/expense/category trends |
+| `GET` | `/reports/monthly-summary` | `months` (1-24, default 6) | Multi-month income/expense/savings/category trends |
+
+Response includes:
+- `labels` — month labels array
+- `months` — per-month totals (income, expenses, savings, savings_rate, net)
+- `category_trends` — per-category spend amounts across all months (only non-zero months)
 
 ### AI
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/ai/suggest-category` | Suggests a category for a transaction description |
+| `POST` | `/ai/suggest-category` | Suggests a category for a transaction description (rule-based) |
 | `POST` | `/ai/insights` | Generates spending insights via Ollama |
 | `POST` | `/ai/chat` | Multi-turn finance chat via Groq |
+
+Chat snapshot includes: income, expenses, savings, available (net), savings rate, top categories, goals, investments.
 
 > AI endpoints gracefully degrade: chat returns 503 if `GROQ_API_KEY` not set, insights return 503 if Ollama not running.
 
@@ -402,8 +441,21 @@ Types: `stocks`, `etf`, `crypto`, `cash`, `real_estate`
 ### Prerequisites
 
 - VPS with Docker installed
-- Domain pointing to VPS IP
+- Domain pointing to VPS IP (`budget.halyed.com` → VPS IP via OVH DNS A record)
 - Shared Caddy container on a `web` Docker network
+
+### Caddy configuration (shared Caddyfile)
+
+```
+budget.halyed.com {
+    handle /api/* {
+        reverse_proxy budget-backend:8000
+    }
+    handle {
+        reverse_proxy budget-frontend:80
+    }
+}
+```
 
 ### First deployment
 
@@ -426,6 +478,8 @@ Manual update:
 git pull origin master
 docker compose up -d --build
 ```
+
+> Alembic migrations run automatically on startup via `entrypoint.sh`. New migrations are applied without manual intervention.
 
 ### Pull Ollama model (first time only)
 
@@ -470,6 +524,7 @@ SQLite at `/app/data/budget.db` inside the container, persisted in the `db_data`
 | `transactions` | Income, expense, savings entries (scoped per user) |
 | `investments` | Investment positions (scoped per user) |
 | `savings_goals` | Savings targets (scoped per user) |
+| `goal_investments` | Junction table — many-to-many between goals and investments |
 | `refresh_tokens` | Active refresh tokens with expiry and revocation flag |
 | `verification_tokens` | Email verification tokens (24h expiry) |
 
@@ -486,6 +541,7 @@ Migration history:
 - `002` — email verification tokens
 - `003` — fix categories unique constraint (batch recreate)
 - `004` — drop leftover UNIQUE(name) via raw SQL rebuild
+- `005` — goal_investments junction table (many-to-many goals ↔ investments)
 
 ---
 
@@ -502,7 +558,7 @@ Two GitHub Actions workflows:
 - SSH into VPS
 - `git pull origin master`
 - `docker compose up --build -d`
-- Health check: `GET https://hbudget.duckdns.org/health`
+- Health check: `GET https://budget.halyed.com/health`
 
 ### Required GitHub Secrets
 

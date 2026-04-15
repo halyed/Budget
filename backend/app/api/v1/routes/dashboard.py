@@ -36,6 +36,7 @@ def get_monthly_summary(
         "total_income": round(total_income, 2),
         "total_expenses": round(total_expenses, 2),
         "saved": round(saved, 2),
+        "net": round(total_income - total_expenses - saved, 2),
         "savings_rate": round((saved / total_income * 100) if total_income > 0 else 0, 1),
     }
 

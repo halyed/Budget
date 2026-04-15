@@ -73,14 +73,14 @@ export class InvestmentsComponent implements OnInit {
     if (!id) return;
     this.savingInv.set(true);
     this.investmentService.update(id, this.editInvForm).subscribe({
-      next: () => { this.editingInvId.set(null); this.savingInv.set(false); this.loadInvestments(); },
+      next: () => { this.editingInvId.set(null); this.savingInv.set(false); this.loadInvestments(); this.loadGoals(); },
       error: () => this.savingInv.set(false),
     });
   }
 
   deleteInv(id: number): void {
     if (!confirm('Delete this investment?')) return;
-    this.investmentService.delete(id).subscribe(() => this.loadInvestments());
+    this.investmentService.delete(id).subscribe(() => { this.loadInvestments(); this.loadGoals(); });
   }
 
   private blankInv(): InvestmentCreate { return { name: '', type: 'etf', value: 0 }; }
@@ -101,7 +101,13 @@ export class InvestmentsComponent implements OnInit {
   }
 
   startEditGoal(g: SavingsGoal): void {
-    this.editGoalForm = { name: g.name, description: g.description, target_amount: g.target_amount, target_date: g.target_date };
+    this.editGoalForm = {
+      name: g.name,
+      description: g.description,
+      target_amount: g.target_amount,
+      target_date: g.target_date,
+      investment_ids: g.linked_investments.map(i => i.id),
+    };
     this.showGoalForm.set(false);
     this.editingGoalId.set(g.id);
   }
@@ -123,5 +129,17 @@ export class InvestmentsComponent implements OnInit {
     this.goalService.delete(id).subscribe(() => this.loadGoals());
   }
 
-  private blankGoal(): GoalCreate { return { name: '', description: null, target_amount: 0, target_date: null }; }
+  toggleInvestment(form: GoalCreate, invId: number): void {
+    const idx = form.investment_ids.indexOf(invId);
+    if (idx === -1) form.investment_ids = [...form.investment_ids, invId];
+    else form.investment_ids = form.investment_ids.filter(id => id !== invId);
+  }
+
+  isLinked(form: GoalCreate, invId: number): boolean {
+    return form.investment_ids.includes(invId);
+  }
+
+  private blankGoal(): GoalCreate {
+    return { name: '', description: null, target_amount: 0, target_date: null, investment_ids: [] };
+  }
 }

@@ -1,49 +1,45 @@
 <div class="flex h-screen bg-gray-100 font-sans">
 
-  <!-- Mobile overlay -->
-  @if (sidebarOpen()) {
-    <div class="fixed inset-0 bg-black/40 z-30 md:hidden" (click)="sidebarOpen.set(false)"></div>
-  }
+  @if (isAuthenticated()) {
+    <!-- Mobile overlay -->
+    @if (sidebarOpen()) {
+      <div class="fixed inset-0 bg-black/40 z-30 md:hidden" (click)="sidebarOpen.set(false)"></div>
+    }
 
-  <!-- Sidebar -->
-  <aside class="fixed md:static inset-y-0 left-0 z-40 w-56 bg-white shadow-md flex flex-col transition-transform duration-200"
-    [class.-translate-x-full]="!sidebarOpen()"
-    [class.translate-x-0]="sidebarOpen()"
-    [class.md:translate-x-0]="true">
-    <div class="px-6 py-5 border-b flex items-center justify-between">
-      <h1 class="text-xl font-bold text-indigo-600">💰 Budget</h1>
-      <button class="md:hidden text-gray-400 hover:text-gray-600" (click)="sidebarOpen.set(false)">✕</button>
-    </div>
-    <nav class="flex-1 py-4 space-y-1 px-3">
-      @for (item of navItems; track item.path) {
-        <a [routerLink]="item.path"
-          routerLinkActive="bg-indigo-50 text-indigo-600 font-semibold"
-          (click)="sidebarOpen.set(false)"
-          class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">
-          {{ item.label }}
-        </a>
-      }
-    </nav>
-    <div class="px-4 py-4 border-t space-y-1">
-      <p class="text-xs text-gray-400 px-3 pb-1">{{ username }}</p>
-      @if (isAuthenticated()) {
+    <!-- Sidebar -->
+    <aside class="fixed md:static inset-y-0 left-0 z-40 w-56 bg-white shadow-md flex flex-col transition-transform duration-200"
+      [class.-translate-x-full]="!sidebarOpen()"
+      [class.translate-x-0]="sidebarOpen()"
+      [class.md:translate-x-0]="true">
+      <div class="px-6 py-5 border-b flex items-center justify-between">
+        <h1 class="text-xl font-bold text-indigo-600">💰 Budget</h1>
+        <button class="md:hidden text-gray-400 hover:text-gray-600" (click)="sidebarOpen.set(false)">✕</button>
+      </div>
+      <nav class="flex-1 py-4 space-y-1 px-3">
+        @for (item of navItems; track item.path) {
+          <a [routerLink]="item.path"
+            routerLinkActive="bg-indigo-50 text-indigo-600 font-semibold"
+            (click)="sidebarOpen.set(false)"
+            class="flex items-center px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+      <div class="px-4 py-4 border-t space-y-1">
+        <p class="text-xs text-gray-400 px-3 pb-1">{{ username }}</p>
         <button
           (click)="openModal()"
-          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-        >
+          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">
           Change password
         </button>
-      }
-      @if (isAuthenticated()) {
         <button
           (click)="logout()"
-          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-        >
+          class="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">
           Sign out
         </button>
-      }
-    </div>
-  </aside>
+      </div>
+    </aside>
+  }
 
   <!-- Change-password modal -->
   @if (showModal()) {
@@ -110,7 +106,9 @@
   <main class="flex-1 overflow-auto flex flex-col min-w-0">
     <!-- Mobile header -->
     <header class="md:hidden flex items-center gap-3 px-4 py-3 bg-white shadow-sm">
-      <button (click)="sidebarOpen.set(true)" class="text-gray-500 hover:text-indigo-600 text-xl leading-none">☰</button>
+      @if (isAuthenticated()) {
+        <button (click)="sidebarOpen.set(true)" class="text-gray-500 hover:text-indigo-600 text-xl leading-none">☰</button>
+      }
       <span class="text-base font-bold text-indigo-600">💰 Budget</span>
     </header>
     <div class="flex-1 overflow-auto">
