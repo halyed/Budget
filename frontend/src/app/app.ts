@@ -18,7 +18,6 @@ export class App {
   navItems = [
     { path: '/dashboard',     label: 'Dashboard' },
     { path: '/transactions',  label: 'Transactions' },
-    { path: '/categories',    label: 'Categories' },
     { path: '/investments',   label: 'Investments' },
     { path: '/reports',       label: 'Reports' },
   ];
