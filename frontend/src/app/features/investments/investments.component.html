@@ -1,27 +1,153 @@
 <div class="p-6 space-y-6">
+
+  <!-- ===== SAVINGS GOALS ===== -->
   <div class="flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-gray-800">Investments</h1>
+    <h1 class="text-2xl font-bold text-gray-800">Savings Goals</h1>
+    <button (click)="showGoalForm.set(!showGoalForm()); editingGoalId.set(null)"
+      class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+      + Add Goal
+    </button>
+  </div>
+
+  @if (showGoalForm()) {
+    <div class="bg-white rounded-xl shadow p-5 border border-indigo-100">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">New Goal</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Name</label>
+          <input type="text" [(ngModel)]="goalForm.name"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Target Date (optional)</label>
+          <input type="date" [(ngModel)]="goalForm.target_date"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Target Amount (€)</label>
+          <input type="number" [(ngModel)]="goalForm.target_amount" min="0"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Description (optional)</label>
+          <input type="text" [(ngModel)]="goalForm.description"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button (click)="saveGoal()" [disabled]="savingGoal()"
+          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          {{ savingGoal() ? 'Saving...' : 'Save' }}
+        </button>
+        <button (click)="showGoalForm.set(false)"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (editingGoalId() !== null) {
+    <div class="bg-white rounded-xl shadow p-5 border border-amber-200">
+      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Goal</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Name</label>
+          <input type="text" [(ngModel)]="editGoalForm.name"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Target Date</label>
+          <input type="date" [(ngModel)]="editGoalForm.target_date"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Target Amount (€)</label>
+          <input type="number" [(ngModel)]="editGoalForm.target_amount" min="0"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Description</label>
+          <input type="text" [(ngModel)]="editGoalForm.description"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button (click)="saveEditGoal()" [disabled]="savingGoal()"
+          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+          {{ savingGoal() ? 'Saving...' : 'Update' }}
+        </button>
+        <button (click)="cancelEditGoal()"
+          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (loadingGoals()) {
+    <div class="flex items-center gap-2 text-gray-400 text-sm py-6 justify-center">
+      <span class="animate-spin text-lg">⟳</span> Loading...
+    </div>
+  } @else {
+    <div class="space-y-4">
+      @for (goal of goals(); track goal.id) {
+        <div class="bg-white rounded-xl shadow p-5"
+          [class.border-2]="editingGoalId() === goal.id"
+          [class.border-amber-300]="editingGoalId() === goal.id">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-800">{{ goal.name }}</h2>
+              @if (goal.description) {
+                <p class="text-sm text-gray-500">{{ goal.description }}</p>
+              }
+            </div>
+            <div class="flex items-center gap-3">
+              @if (goal.target_date) {
+                <span class="text-sm text-gray-400">Target: {{ goal.target_date | date:'MMM yyyy' }}</span>
+              }
+              <button (click)="startEditGoal(goal)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
+              <button (click)="deleteGoal(goal.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+            </div>
+          </div>
+          <div class="flex justify-between text-sm text-gray-600 mb-1">
+            <span>€{{ goal.current_amount | number:'1.0-0' }}</span>
+            <span>€{{ goal.target_amount | number:'1.0-0' }}</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-3">
+            <div class="bg-indigo-500 h-3 rounded-full transition-all" [style.width.%]="goal.progress_pct"></div>
+          </div>
+          <p class="text-right text-sm font-medium text-indigo-600 mt-1">{{ goal.progress_pct }}%</p>
+        </div>
+      } @empty {
+        <p class="text-center text-gray-400 py-6">No goals yet. Add your first one above.</p>
+      }
+    </div>
+  }
+
+  <!-- Divider -->
+  <hr class="border-gray-200" />
+
+  <!-- ===== INVESTMENTS ===== -->
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-gray-800">Investments</h2>
     <div class="flex items-center gap-4">
       <span class="text-lg font-semibold text-indigo-600">Total: €{{ total() | number:'1.0-0' }}</span>
-      <button (click)="showForm.set(!showForm()); editingId.set(null)"
+      <button (click)="showInvForm.set(!showInvForm()); editingInvId.set(null)"
         class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
         + Add
       </button>
     </div>
   </div>
 
-  @if (showForm()) {
+  @if (showInvForm()) {
     <div class="bg-white rounded-xl shadow p-5 border border-indigo-100">
       <h2 class="text-base font-semibold text-gray-700 mb-4">New Investment</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1">Name</label>
-          <input type="text" [(ngModel)]="form.name"
+          <input type="text" [(ngModel)]="invForm.name"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Type</label>
-          <select [(ngModel)]="form.type"
+          <select [(ngModel)]="invForm.type"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
             <option value="etf">ETF</option>
             <option value="stocks">Stocks</option>
@@ -32,33 +158,33 @@
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
-          <input type="number" [(ngModel)]="form.value" min="0" step="0.01"
+          <input type="number" [(ngModel)]="invForm.value" min="0" step="0.01"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
       </div>
       <div class="flex gap-3 mt-4">
-        <button (click)="save()" [disabled]="saving()"
+        <button (click)="saveInv()" [disabled]="savingInv()"
           class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-          {{ saving() ? 'Saving...' : 'Save' }}
+          {{ savingInv() ? 'Saving...' : 'Save' }}
         </button>
-        <button (click)="showForm.set(false)"
+        <button (click)="showInvForm.set(false)"
           class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
       </div>
     </div>
   }
 
-  @if (editingId() !== null) {
+  @if (editingInvId() !== null) {
     <div class="bg-white rounded-xl shadow p-5 border border-amber-200">
       <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Investment</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1">Name</label>
-          <input type="text" [(ngModel)]="editForm.name"
+          <input type="text" [(ngModel)]="editInvForm.name"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Type</label>
-          <select [(ngModel)]="editForm.type"
+          <select [(ngModel)]="editInvForm.type"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
             <option value="etf">ETF</option>
             <option value="stocks">Stocks</option>
@@ -69,38 +195,44 @@
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
-          <input type="number" [(ngModel)]="editForm.value" min="0" step="0.01"
+          <input type="number" [(ngModel)]="editInvForm.value" min="0" step="0.01"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
         </div>
       </div>
       <div class="flex gap-3 mt-4">
-        <button (click)="saveEdit()" [disabled]="saving()"
+        <button (click)="saveEditInv()" [disabled]="savingInv()"
           class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-          {{ saving() ? 'Saving...' : 'Update' }}
+          {{ savingInv() ? 'Saving...' : 'Update' }}
         </button>
-        <button (click)="cancelEdit()"
+        <button (click)="cancelEditInv()"
           class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
       </div>
     </div>
   }
 
-  @if (loading()) {
-    <div class="flex items-center gap-2 text-gray-400 text-sm py-12 justify-center">
+  @if (loadingInv()) {
+    <div class="flex items-center gap-2 text-gray-400 text-sm py-6 justify-center">
       <span class="animate-spin text-lg">⟳</span> Loading...
     </div>
-  }
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" [class.hidden]="loading()">
-    @for (inv of investments(); track inv.id) {
-      <div class="bg-white rounded-xl shadow p-5" [class.border-2]="editingId() === inv.id" [class.border-amber-300]="editingId() === inv.id">
-        <p class="text-sm text-gray-500 capitalize">{{ inv.type }}</p>
-        <p class="text-xl font-bold text-gray-800 mt-1">{{ inv.name }}</p>
-        <p class="text-2xl font-bold text-indigo-600 mt-2">€{{ inv.value | number:'1.0-0' }}</p>
-        <p class="text-xs text-gray-400 mt-2">Updated {{ inv.updated_at | date:'mediumDate' }}</p>
-        <div class="flex gap-3 mt-3">
-          <button (click)="startEdit(inv)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
-          <button (click)="delete(inv.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      @for (inv of investments(); track inv.id) {
+        <div class="bg-white rounded-xl shadow p-5"
+          [class.border-2]="editingInvId() === inv.id"
+          [class.border-amber-300]="editingInvId() === inv.id">
+          <p class="text-sm text-gray-500 capitalize">{{ inv.type }}</p>
+          <p class="text-xl font-bold text-gray-800 mt-1">{{ inv.name }}</p>
+          <p class="text-2xl font-bold text-indigo-600 mt-2">€{{ inv.value | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-2">Updated {{ inv.updated_at | date:'mediumDate' }}</p>
+          <div class="flex gap-3 mt-3">
+            <button (click)="startEditInv(inv)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
+            <button (click)="deleteInv(inv.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+          </div>
         </div>
-      </div>
-    }
-  </div>
+      } @empty {
+        <p class="text-gray-400 text-sm py-6 sm:col-span-3 text-center">No investments yet.</p>
+      }
+    </div>
+  }
+
 </div>

@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { TransactionsComponent } from './features/transactions/transactions.component';
 import { InvestmentsComponent } from './features/investments/investments.component';
-import { GoalsComponent } from './features/goals/goals.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { ChatComponent } from './features/chat/chat.component';
 import { LoginComponent } from './features/login/login.component';
@@ -17,8 +16,9 @@ export const routes: Routes = [
   { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'dashboard',    component: DashboardComponent,    canActivate: [authGuard] },
   { path: 'transactions', component: TransactionsComponent, canActivate: [authGuard] },
+  { path: 'categories',   redirectTo: 'transactions',        pathMatch: 'full' },
   { path: 'investments',  component: InvestmentsComponent,  canActivate: [authGuard] },
-  { path: 'goals',        component: GoalsComponent,        canActivate: [authGuard] },
+  { path: 'goals',        redirectTo: 'investments',        pathMatch: 'full' },
   { path: 'reports',      component: ReportsComponent,      canActivate: [authGuard] },
   { path: 'chat',         component: ChatComponent,         canActivate: [authGuard] },
 ];

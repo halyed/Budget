@@ -27,8 +27,8 @@ def get_monthly_summary(
     )
 
     total_income = base_q.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    total_expenses = base_q.filter(Transaction.type.in_(["expense", "savings"])).with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    saved = total_income - total_expenses
+    total_expenses = base_q.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
+    saved = base_q.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
 
     return {
         "month": month,

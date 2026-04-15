@@ -40,11 +40,15 @@ def get_monthly_summary(
             .scalar() or 0.0
         )
         expenses = (
-            base_q.filter(Transaction.type.in_(["expense", "savings"]))
+            base_q.filter(Transaction.type == "expense")
             .with_entities(func.sum(Transaction.amount))
             .scalar() or 0.0
         )
-        savings = income - expenses
+        savings = (
+            base_q.filter(Transaction.type == "savings")
+            .with_entities(func.sum(Transaction.amount))
+            .scalar() or 0.0
+        )
         savings_rate = round((savings / income * 100) if income > 0 else 0.0, 1)
         monthly_data.append({
             "label": date(year, month, 1).strftime("%b %Y"),
@@ -54,12 +58,13 @@ def get_monthly_summary(
             "expenses": round(expenses, 2),
             "savings": round(savings, 2),
             "savings_rate": savings_rate,
+            "net": round(income - expenses - savings, 2),
         })
 
-    # --- Category trends (expense categories only) ---
+    # --- Category trends (all categories, filtered to expense transactions) ---
     categories = (
         db.query(Category)
-        .filter(Category.user_id == current_user.id, Category.type == "expense")
+        .filter(Category.user_id == current_user.id)
         .order_by(Category.name)
         .all()
     )

@@ -2,7 +2,9 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InvestmentService } from '../../core/services/investment.service';
+import { GoalService } from '../../core/services/goal.service';
 import { Investment, InvestmentCreate } from '../../core/models/investment.model';
+import { SavingsGoal, GoalCreate } from '../../core/models/goal.model';
 
 @Component({
   selector: 'app-investments',
@@ -11,56 +13,115 @@ import { Investment, InvestmentCreate } from '../../core/models/investment.model
   templateUrl: './investments.component.html',
 })
 export class InvestmentsComponent implements OnInit {
+  // --- Investments ---
   investments = signal<Investment[]>([]);
-  loading = signal(true);
-  saving = signal(false);
-  showForm = signal(false);
-  editingId = signal<number | null>(null);
+  loadingInv  = signal(true);
+  savingInv   = signal(false);
+  showInvForm = signal(false);
+  editingInvId = signal<number | null>(null);
 
   total = computed(() => this.investments().reduce((s, i) => s + i.value, 0));
 
-  editForm: InvestmentCreate = this.blank();
-  form: InvestmentCreate = this.blank();
+  editInvForm: InvestmentCreate = this.blankInv();
+  invForm: InvestmentCreate = this.blankInv();
 
-  constructor(private investmentService: InvestmentService) {}
+  // --- Goals ---
+  goals = signal<SavingsGoal[]>([]);
+  loadingGoals  = signal(true);
+  savingGoal    = signal(false);
+  showGoalForm  = signal(false);
+  editingGoalId = signal<number | null>(null);
 
-  ngOnInit(): void { this.load(); }
+  goalForm: GoalCreate = this.blankGoal();
+  editGoalForm: GoalCreate = this.blankGoal();
 
-  load(): void {
-    this.loading.set(true);
-    this.investmentService.list().subscribe(inv => { this.investments.set(inv); this.loading.set(false); });
+  constructor(
+    private investmentService: InvestmentService,
+    private goalService: GoalService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadInvestments();
+    this.loadGoals();
   }
 
-  save(): void {
-    this.saving.set(true);
-    this.investmentService.create(this.form).subscribe({
-      next: () => { this.showForm.set(false); this.saving.set(false); this.form = this.blank(); this.load(); },
-      error: () => this.saving.set(false),
+  // --- Investment methods ---
+
+  loadInvestments(): void {
+    this.loadingInv.set(true);
+    this.investmentService.list().subscribe(inv => { this.investments.set(inv); this.loadingInv.set(false); });
+  }
+
+  saveInv(): void {
+    this.savingInv.set(true);
+    this.investmentService.create(this.invForm).subscribe({
+      next: () => { this.showInvForm.set(false); this.savingInv.set(false); this.invForm = this.blankInv(); this.loadInvestments(); },
+      error: () => this.savingInv.set(false),
     });
   }
 
-  startEdit(inv: Investment): void {
-    this.editForm = { name: inv.name, type: inv.type, value: inv.value };
-    this.showForm.set(false);
-    this.editingId.set(inv.id);
+  startEditInv(inv: Investment): void {
+    this.editInvForm = { name: inv.name, type: inv.type, value: inv.value };
+    this.showInvForm.set(false);
+    this.editingInvId.set(inv.id);
   }
 
-  cancelEdit(): void { this.editingId.set(null); }
+  cancelEditInv(): void { this.editingInvId.set(null); }
 
-  saveEdit(): void {
-    const id = this.editingId();
+  saveEditInv(): void {
+    const id = this.editingInvId();
     if (!id) return;
-    this.saving.set(true);
-    this.investmentService.update(id, this.editForm).subscribe({
-      next: () => { this.editingId.set(null); this.saving.set(false); this.load(); },
-      error: () => this.saving.set(false),
+    this.savingInv.set(true);
+    this.investmentService.update(id, this.editInvForm).subscribe({
+      next: () => { this.editingInvId.set(null); this.savingInv.set(false); this.loadInvestments(); },
+      error: () => this.savingInv.set(false),
     });
   }
 
-  delete(id: number): void {
+  deleteInv(id: number): void {
     if (!confirm('Delete this investment?')) return;
-    this.investmentService.delete(id).subscribe(() => this.load());
+    this.investmentService.delete(id).subscribe(() => this.loadInvestments());
   }
 
-  private blank(): InvestmentCreate { return { name: '', type: 'etf', value: 0 }; }
+  private blankInv(): InvestmentCreate { return { name: '', type: 'etf', value: 0 }; }
+
+  // --- Goal methods ---
+
+  loadGoals(): void {
+    this.loadingGoals.set(true);
+    this.goalService.list().subscribe(g => { this.goals.set(g); this.loadingGoals.set(false); });
+  }
+
+  saveGoal(): void {
+    this.savingGoal.set(true);
+    this.goalService.create(this.goalForm).subscribe({
+      next: () => { this.showGoalForm.set(false); this.savingGoal.set(false); this.goalForm = this.blankGoal(); this.loadGoals(); },
+      error: () => this.savingGoal.set(false),
+    });
+  }
+
+  startEditGoal(g: SavingsGoal): void {
+    this.editGoalForm = { name: g.name, description: g.description, target_amount: g.target_amount, target_date: g.target_date };
+    this.showGoalForm.set(false);
+    this.editingGoalId.set(g.id);
+  }
+
+  cancelEditGoal(): void { this.editingGoalId.set(null); }
+
+  saveEditGoal(): void {
+    const id = this.editingGoalId();
+    if (!id) return;
+    this.savingGoal.set(true);
+    this.goalService.update(id, this.editGoalForm).subscribe({
+      next: () => { this.editingGoalId.set(null); this.savingGoal.set(false); this.loadGoals(); },
+      error: () => this.savingGoal.set(false),
+    });
+  }
+
+  deleteGoal(id: number): void {
+    if (!confirm('Delete this goal?')) return;
+    this.goalService.delete(id).subscribe(() => this.loadGoals());
+  }
+
+  private blankGoal(): GoalCreate { return { name: '', description: null, target_amount: 0, target_date: null }; }
 }

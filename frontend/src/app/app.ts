@@ -15,8 +15,7 @@ export class App {
   navItems = [
     { path: '/dashboard',     label: 'Dashboard' },
     { path: '/transactions',  label: 'Transactions' },
-    { path: '/investments',   label: 'Investments' },
-    { path: '/goals',         label: 'Goals' },
+    { path: '/investments',   label: 'Investments & Goals' },
     { path: '/reports',       label: 'Reports' },
     { path: '/chat',          label: 'AI Chat' },
   ];
