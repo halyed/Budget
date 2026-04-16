@@ -7,6 +7,7 @@ import { Chart, registerables } from 'chart.js';
 import { SankeyController, Flow } from 'chartjs-chart-sankey';
 import { ApiService } from '../../core/services/api.service';
 import { AiService } from '../../core/services/ai.service';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 Chart.register(...registerables, SankeyController, Flow);
 
@@ -41,7 +42,7 @@ const CHART_COLORS = [
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CurrencyFormatPipe],
   templateUrl: './reports.component.html',
 })
 export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {

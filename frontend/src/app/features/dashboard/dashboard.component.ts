@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AiService, ChatMessage } from '../../core/services/ai.service';
 import { MonthlySummary, BudgetVsActual, PortfolioSummary } from '../../core/models/dashboard.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
@@ -14,7 +15,7 @@ interface DisplayMessage {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit, AfterViewChecked {

@@ -211,7 +211,7 @@
                     [class.text-green-600]="t.type === 'income'"
                     [class.text-red-500]="t.type === 'expense'"
                     [class.text-blue-600]="t.type === 'savings'">
-                    {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                    {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
                   </span>
                   <span class="text-xs px-2 py-0.5 rounded-full mt-1"
                     [class.bg-green-100]="t.type === 'income'" [class.text-green-700]="t.type === 'income'"
@@ -261,7 +261,7 @@
                       [class.text-green-600]="t.type === 'income'"
                       [class.text-red-500]="t.type === 'expense'"
                       [class.text-blue-600]="t.type === 'savings'">
-                      {{ t.type === 'income' ? '+' : '-' }}€{{ t.amount | number:'1.2-2' }}
+                      {{ t.type === 'income' ? '+' : '-' }}{{ t.amount | currencyFormat:'1.2-2' }}
                     </td>
                     <td class="px-4 py-3 text-right whitespace-nowrap">
                       <button (click)="startEditTx(t)" class="text-gray-400 hover:text-amber-500 text-xs mr-2">Edit</button>
@@ -426,7 +426,7 @@
                         <span class="w-3 h-3 rounded-full flex-shrink-0" [style.background]="cat.color"></span>
                         <div class="min-w-0">
                           <p class="text-sm font-medium text-gray-700 truncate">{{ cat.name }}</p>
-                          <p class="text-xs text-gray-400">€{{ cat.planned_amount | number:'1.2-2' }} planned</p>
+                          <p class="text-xs text-gray-400">{{ cat.planned_amount | currencyFormat:'1.2-2' }} planned</p>
                         </div>
                       </div>
                       <div class="flex gap-2 ml-3 shrink-0">

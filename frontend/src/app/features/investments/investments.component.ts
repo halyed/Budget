@@ -5,11 +5,12 @@ import { InvestmentService } from '../../core/services/investment.service';
 import { GoalService } from '../../core/services/goal.service';
 import { Investment, InvestmentCreate } from '../../core/models/investment.model';
 import { SavingsGoal, GoalCreate } from '../../core/models/goal.model';
+import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-investments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './investments.component.html',
 })
 export class InvestmentsComponent implements OnInit {

@@ -117,7 +117,7 @@
                         <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="row.color"></span>
                         <span class="text-gray-700 truncate">{{ row.name }}</span>
                       </td>
-                      <td class="py-1 text-right text-gray-700">{{ row.amount | number:'1.2-2' }}</td>
+                      <td class="py-1 text-right text-gray-700">{{ row.amount | currencyFormat:'1.2-2' }}</td>
                       <td class="py-1 text-right font-medium"
                           [class.text-red-500]="row.pct > 20"
                           [class.text-amber-500]="row.pct > 10 && row.pct <= 20"
