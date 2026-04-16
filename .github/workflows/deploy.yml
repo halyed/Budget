@@ -29,6 +29,6 @@ jobs:
       - name: Health check
         run: |
           sleep 15
-          curl --fail --silent --max-time 10 https://hbudget.duckdns.org/health \
+          curl --fail --silent --max-time 10 https://budget.halyed.com/health \
             && echo "Health check passed" \
             || (echo "Health check failed" && exit 1)
