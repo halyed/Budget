@@ -1,13 +1,13 @@
 import datetime
-from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
 from app.schemas.category import CategoryRead
+from app.schemas.types import DecimalAsFloat
 
 
 class TransactionBase(BaseModel):
     date: datetime.date
-    amount: Decimal
+    amount: DecimalAsFloat
     description: Optional[str] = None
     type: str  # income | expense
     category_id: Optional[int] = None
@@ -19,7 +19,7 @@ class TransactionCreate(TransactionBase):
 
 class TransactionUpdate(BaseModel):
     date: datetime.date | None = None
-    amount: Decimal | None = None
+    amount: DecimalAsFloat | None = None
     description: str | None = None
     type: str | None = None
     category_id: int | None = None

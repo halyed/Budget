@@ -1,13 +1,13 @@
 from datetime import datetime
-from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
+from app.schemas.types import DecimalAsFloat
 
 
 class InvestmentBase(BaseModel):
     name: str
     type: str  # etf, crypto, cash, stocks
-    value: Decimal
+    value: DecimalAsFloat
 
 
 class InvestmentCreate(InvestmentBase):
@@ -17,7 +17,7 @@ class InvestmentCreate(InvestmentBase):
 class InvestmentUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
-    value: Optional[Decimal] = None
+    value: Optional[DecimalAsFloat] = None
 
 
 class InvestmentRead(InvestmentBase):

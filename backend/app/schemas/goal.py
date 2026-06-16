@@ -2,13 +2,14 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional, List
 from pydantic import BaseModel, computed_field
+from app.schemas.types import DecimalAsFloat
 
 
 class LinkedInvestment(BaseModel):
     id: int
     name: str
     type: str
-    value: Decimal
+    value: DecimalAsFloat
 
     model_config = {"from_attributes": True}
 
@@ -16,15 +17,15 @@ class LinkedInvestment(BaseModel):
 class GoalBase(BaseModel):
     name: str
     description: Optional[str] = None
-    target_amount: Decimal
-    current_amount: Decimal = Decimal("0.00")
+    target_amount: DecimalAsFloat
+    current_amount: DecimalAsFloat = Decimal("0.00")
     target_date: Optional[date] = None
 
 
 class GoalCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    target_amount: Decimal
+    target_amount: DecimalAsFloat
     target_date: Optional[date] = None
     investment_ids: List[int] = []
 
@@ -32,8 +33,8 @@ class GoalCreate(BaseModel):
 class GoalUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    target_amount: Optional[Decimal] = None
-    current_amount: Optional[Decimal] = None
+    target_amount: Optional[DecimalAsFloat] = None
+    current_amount: Optional[DecimalAsFloat] = None
     target_date: Optional[date] = None
     investment_ids: Optional[List[int]] = None
 
@@ -42,8 +43,8 @@ class GoalRead(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    target_amount: Decimal
-    current_amount: Decimal
+    target_amount: DecimalAsFloat
+    current_amount: DecimalAsFloat
     target_date: Optional[date] = None
     linked_investments: List[LinkedInvestment] = []
 
