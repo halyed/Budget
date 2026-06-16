@@ -27,13 +27,9 @@ export class DashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('portfolioCanvas') portfolioCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   private today = new Date();
-  selectedMonth = signal(this.today.getMonth() + 1);
-  selectedYear  = signal(this.today.getFullYear());
-
-  selectedLabel = computed(() => {
-    const d = new Date(this.selectedYear(), this.selectedMonth() - 1, 1);
-    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
-  });
+  selectedMonth = this.today.getMonth() + 1;
+  selectedYear  = this.today.getFullYear();
+  selectedLabel = this.today.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   loading = signal(true);
   summary = signal<MonthlySummary | null>(null);
@@ -86,14 +82,10 @@ export class DashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
-  }
-
-  private loadData(): void {
     this.loading.set(true);
     forkJoin({
-      summary: this.dashboardService.getSummary(this.selectedMonth(), this.selectedYear()),
-      budgetVsActual: this.dashboardService.getBudgetVsActual(this.selectedMonth(), this.selectedYear()),
+      summary: this.dashboardService.getSummary(this.selectedMonth, this.selectedYear),
+      budgetVsActual: this.dashboardService.getBudgetVsActual(this.selectedMonth, this.selectedYear),
       portfolio: this.dashboardService.getPortfolio(),
     }).subscribe(({ summary, budgetVsActual, portfolio }) => {
       this.summary.set(summary);
@@ -102,20 +94,6 @@ export class DashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       this.pendingChartRender = true;
     });
-  }
-
-  // Lets users move into next month early (e.g. salary arrives before month-end)
-  // instead of being locked to the calendar's current month.
-  prevMonth(): void {
-    if (this.selectedMonth() === 1) { this.selectedMonth.set(12); this.selectedYear.update(y => y - 1); }
-    else { this.selectedMonth.update(m => m - 1); }
-    this.loadData();
-  }
-
-  nextMonth(): void {
-    if (this.selectedMonth() === 12) { this.selectedMonth.set(1); this.selectedYear.update(y => y + 1); }
-    else { this.selectedMonth.update(m => m + 1); }
-    this.loadData();
   }
 
   ngAfterViewChecked(): void {
