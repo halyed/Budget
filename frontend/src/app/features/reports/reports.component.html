@@ -44,49 +44,20 @@
 
     </div>
 
-    <!-- Middle: left = titles + navigator | right = AI Insights card -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-      <!-- Left: section label + month navigator on same line -->
-      <div class="flex items-center justify-between gap-3">
-        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Category Breakdown &amp; Cash Flow</span>
-        <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
-          <button (click)="prevChartMonth()" [disabled]="isFirstChartMonth()"
-            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-            &#8592;
-          </button>
-          <span class="text-sm font-medium text-gray-700 px-2 min-w-28 text-center">{{ chartMonthLabel() }}</span>
-          <button (click)="nextChartMonth()" [disabled]="isLastChartMonth()"
-            class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-            &#8594;
-          </button>
-        </div>
+    <!-- Section label + month navigator -->
+    <div class="flex items-center justify-between gap-3">
+      <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Category Breakdown &amp; Cash Flow</span>
+      <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
+        <button (click)="prevChartMonth()" [disabled]="isFirstChartMonth()"
+          class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          &#8592;
+        </button>
+        <span class="text-sm font-medium text-gray-700 px-2 min-w-28 text-center">{{ chartMonthLabel() }}</span>
+        <button (click)="nextChartMonth()" [disabled]="isLastChartMonth()"
+          class="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          &#8594;
+        </button>
       </div>
-
-      <!-- Right: AI Insights card -->
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-gray-600">AI Spending Insights</h2>
-          <button (click)="getInsights()" [disabled]="insightsLoading()"
-            class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-            {{ insightsLoading() ? 'Analysing…' : 'Get AI Insights' }}
-          </button>
-        </div>
-        @if (insightsLoading()) {
-          <div class="flex items-center gap-2 text-gray-400 text-sm py-4">
-            <span class="animate-spin">⟳</span> Phi-3 Mini is thinking…
-          </div>
-        } @else if (insightsError()) {
-          <p class="text-red-500 text-sm">{{ insightsError() }}</p>
-        } @else if (insightsText()) {
-          <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-indigo-50 rounded-xl p-4">
-            {{ insightsText() }}
-          </div>
-        } @else {
-          <p class="text-gray-400 text-sm">Click "Get AI Insights" to analyse your spending with a local AI model.</p>
-        }
-      </div>
-
     </div>
 
     <!-- Row 2: Category Breakdown + Cash Flow -->

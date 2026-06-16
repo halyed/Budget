@@ -1,11 +1,15 @@
-import { Component, OnInit, AfterViewChecked, ViewChild, ElementRef, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { Chart, registerables } from 'chart.js';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AiService, ChatMessage } from '../../core/services/ai.service';
 import { MonthlySummary, BudgetVsActual, PortfolioSummary } from '../../core/models/dashboard.model';
 import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
+import { chartColors } from '../../core/utils/chart-colors';
+
+Chart.register(...registerables);
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
@@ -18,12 +22,18 @@ interface DisplayMessage {
   imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './dashboard.component.html',
 })
-export class DashboardComponent implements OnInit, AfterViewChecked {
+export class DashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('messagesEnd') messagesEnd!: ElementRef;
+  @ViewChild('portfolioCanvas') portfolioCanvasRef?: ElementRef<HTMLCanvasElement>;
 
-  today = new Date();
-  month = this.today.getMonth() + 1;
-  year = this.today.getFullYear();
+  private today = new Date();
+  selectedMonth = signal(this.today.getMonth() + 1);
+  selectedYear  = signal(this.today.getFullYear());
+
+  selectedLabel = computed(() => {
+    const d = new Date(this.selectedYear(), this.selectedMonth() - 1, 1);
+    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+  });
 
   loading = signal(true);
   summary = signal<MonthlySummary | null>(null);
@@ -41,6 +51,18 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
     this.showAllBudget() ? this.sortedBudget() : this.sortedBudget().slice(0, 10)
   );
 
+  portfolioBreakdown = computed(() => {
+    const p = this.portfolio();
+    if (!p || p.total_portfolio <= 0) return [];
+    const sorted = [...p.breakdown].sort((a, b) => b.value - a.value);
+    const colors = chartColors(sorted.length);
+    return sorted.map((item, i) => ({
+      ...item,
+      pct: Math.round((item.value / p.total_portfolio) * 1000) / 10,
+      color: colors[i],
+    }));
+  });
+
   // Chat
   chatOpen    = signal(false);
   messages    = signal<DisplayMessage[]>([]);
@@ -55,6 +77,8 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
   ];
 
   private shouldScroll = false;
+  private pendingChartRender = false;
+  private portfolioChart: Chart | null = null;
 
   constructor(
     private dashboardService: DashboardService,
@@ -62,16 +86,36 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
   ) {}
 
   ngOnInit(): void {
+    this.loadData();
+  }
+
+  private loadData(): void {
+    this.loading.set(true);
     forkJoin({
-      summary: this.dashboardService.getSummary(this.month, this.year),
-      budgetVsActual: this.dashboardService.getBudgetVsActual(this.month, this.year),
+      summary: this.dashboardService.getSummary(this.selectedMonth(), this.selectedYear()),
+      budgetVsActual: this.dashboardService.getBudgetVsActual(this.selectedMonth(), this.selectedYear()),
       portfolio: this.dashboardService.getPortfolio(),
     }).subscribe(({ summary, budgetVsActual, portfolio }) => {
       this.summary.set(summary);
       this.budgetVsActual.set(budgetVsActual);
       this.portfolio.set(portfolio);
       this.loading.set(false);
+      this.pendingChartRender = true;
     });
+  }
+
+  // Lets users move into next month early (e.g. salary arrives before month-end)
+  // instead of being locked to the calendar's current month.
+  prevMonth(): void {
+    if (this.selectedMonth() === 1) { this.selectedMonth.set(12); this.selectedYear.update(y => y - 1); }
+    else { this.selectedMonth.update(m => m - 1); }
+    this.loadData();
+  }
+
+  nextMonth(): void {
+    if (this.selectedMonth() === 12) { this.selectedMonth.set(1); this.selectedYear.update(y => y + 1); }
+    else { this.selectedMonth.update(m => m + 1); }
+    this.loadData();
   }
 
   ngAfterViewChecked(): void {
@@ -79,6 +123,48 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
       this.messagesEnd?.nativeElement.scrollIntoView({ behavior: 'smooth' });
       this.shouldScroll = false;
     }
+    if (this.pendingChartRender && this.portfolioCanvasRef?.nativeElement) {
+      this.pendingChartRender = false;
+      this.renderPortfolioChart();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.portfolioChart?.destroy();
+  }
+
+  private renderPortfolioChart(): void {
+    const ctx = this.portfolioCanvasRef?.nativeElement;
+    const breakdown = this.portfolioBreakdown();
+    if (!ctx || breakdown.length === 0) return;
+
+    this.portfolioChart?.destroy();
+    this.portfolioChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: breakdown.map(b => b.name),
+        datasets: [{
+          data: breakdown.map(b => b.value),
+          backgroundColor: breakdown.map(b => b.color),
+          hoverOffset: 8,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const item = breakdown[ctx.dataIndex];
+                return ` ${item.name}: ${item.value.toFixed(2)} (${item.pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   toggleChat(): void {

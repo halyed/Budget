@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from datetime import date
+from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 
 from app.core.database import get_db
@@ -37,17 +38,17 @@ def get_monthly_summary(
         income = (
             base_q.filter(Transaction.type == "income")
             .with_entities(func.sum(Transaction.amount))
-            .scalar() or 0.0
+            .scalar() or Decimal("0.00")
         )
         expenses = (
             base_q.filter(Transaction.type == "expense")
             .with_entities(func.sum(Transaction.amount))
-            .scalar() or 0.0
+            .scalar() or Decimal("0.00")
         )
         savings = (
             base_q.filter(Transaction.type == "savings")
             .with_entities(func.sum(Transaction.amount))
-            .scalar() or 0.0
+            .scalar() or Decimal("0.00")
         )
         savings_rate = round((savings / income * 100) if income > 0 else 0.0, 1)
         monthly_data.append({
@@ -82,7 +83,7 @@ def get_monthly_summary(
                     extract("year", Transaction.date) == year,
                     extract("month", Transaction.date) == month,
                 )
-                .scalar() or 0.0
+                .scalar() or Decimal("0.00")
             )
             amounts.append(round(total, 2))
         # Only include categories that have at least one non-zero month

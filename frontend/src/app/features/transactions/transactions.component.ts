@@ -46,19 +46,15 @@ export class TransactionsComponent implements OnInit {
     return d.toLocaleString('default', { month: 'long', year: 'numeric' });
   });
 
-  isCurrentMonth = computed(() =>
-    this.selectedMonth() === this.today.getMonth() + 1 &&
-    this.selectedYear()  === this.today.getFullYear()
-  );
-
   prevMonth(): void {
     if (this.selectedMonth() === 1) { this.selectedMonth.set(12); this.selectedYear.update(y => y - 1); }
     else { this.selectedMonth.update(m => m - 1); }
     this.loadTransactions(false);
   }
 
+  // Lets users move into next month early (e.g. salary arrives before month-end)
+  // instead of being locked to the calendar's current month.
   nextMonth(): void {
-    if (this.isCurrentMonth()) return;
     if (this.selectedMonth() === 12) { this.selectedMonth.set(1); this.selectedYear.update(y => y + 1); }
     else { this.selectedMonth.update(m => m + 1); }
     this.loadTransactions(false);

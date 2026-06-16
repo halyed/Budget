@@ -1,5 +1,18 @@
 <div class="p-6 space-y-6">
-  <h1 class="text-2xl font-bold text-gray-800">Dashboard — {{ today | date:'MMMM yyyy' }}</h1>
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-1">
+      <button (click)="prevMonth()"
+        class="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors" title="Previous month">
+        &#8592;
+      </button>
+      <span class="text-sm font-medium text-gray-700 px-2 min-w-32 text-center">{{ selectedLabel() }}</span>
+      <button (click)="nextMonth()"
+        class="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors" title="Next month">
+        &#8594;
+      </button>
+    </div>
+  </div>
 
   @if (loading()) {
     <div class="flex items-center gap-2 text-gray-400 text-sm py-12 justify-center">
@@ -31,14 +44,38 @@
   @if (portfolio()) {
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="text-lg font-semibold text-gray-700 mb-3">Portfolio — {{ portfolio()!.total_portfolio | currencyFormat }}</h2>
-      <div class="flex flex-wrap gap-3">
-        @for (item of portfolio()!.breakdown; track item.id) {
-          <div class="bg-gray-50 rounded-lg px-4 py-2 text-sm">
-            <span class="font-medium text-gray-700">{{ item.name }}</span>
-            <span class="ml-2 text-gray-500">{{ item.value | currencyFormat }}</span>
+      @if (portfolio()!.breakdown.length === 0) {
+        <p class="text-gray-400 text-sm text-center py-8">No portfolio data yet.</p>
+      } @else {
+        <div class="flex gap-4 items-start">
+          <div class="h-48 w-48 flex-shrink-0">
+            <canvas #portfolioCanvas></canvas>
           </div>
-        }
-      </div>
+          <div class="flex-1 overflow-y-auto max-h-48">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                  <th class="pb-1 text-left font-medium">Category</th>
+                  <th class="pb-1 text-right font-medium">Amount</th>
+                  <th class="pb-1 text-right font-medium">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of portfolioBreakdown(); track item.id) {
+                  <tr class="border-b border-gray-50">
+                    <td class="py-1 flex items-center gap-1.5">
+                      <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="item.color"></span>
+                      <span class="text-gray-700 truncate">{{ item.name }}</span>
+                    </td>
+                    <td class="py-1 text-right text-gray-700">{{ item.value | currencyFormat }}</td>
+                    <td class="py-1 text-right font-medium text-gray-600">{{ item.pct }}%</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
     </div>
   }
 

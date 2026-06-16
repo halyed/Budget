@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
 
@@ -6,7 +7,7 @@ from pydantic import BaseModel
 class InvestmentBase(BaseModel):
     name: str
     type: str  # etf, crypto, cash, stocks
-    value: float
+    value: Decimal
 
 
 class InvestmentCreate(InvestmentBase):
@@ -16,7 +17,7 @@ class InvestmentCreate(InvestmentBase):
 class InvestmentUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
-    value: Optional[float] = None
+    value: Optional[Decimal] = None
 
 
 class InvestmentRead(InvestmentBase):

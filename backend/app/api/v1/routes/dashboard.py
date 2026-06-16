@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from datetime import date
+from decimal import Decimal
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.transaction import Transaction
@@ -26,9 +27,9 @@ def get_monthly_summary(
         extract("year", Transaction.date) == year,
     )
 
-    total_income = base_q.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    total_expenses = base_q.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    saved = base_q.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
+    total_income = base_q.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
+    total_expenses = base_q.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
+    saved = base_q.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
 
     return {
         "month": month,
@@ -61,7 +62,7 @@ def get_budget_vs_actual(
                 extract("month", Transaction.date) == month,
                 extract("year", Transaction.date) == year,
             )
-            .scalar() or 0.0
+            .scalar() or Decimal("0.00")
         )
         result.append({
             "category_id": cat.id,

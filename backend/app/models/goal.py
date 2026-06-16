@@ -1,6 +1,7 @@
 from datetime import date
+from decimal import Decimal
 from typing import Optional, List
-from sqlalchemy import String, Float, Date, Text, ForeignKey, Table, Column, Integer
+from sqlalchemy import String, Numeric, Date, Text, ForeignKey, Table, Column, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
@@ -20,8 +21,8 @@ class SavingsGoal(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    target_amount: Mapped[float] = mapped_column(Float, nullable=False)
-    current_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    current_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0.00"))
     target_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 

@@ -1,5 +1,6 @@
 import logging
 from datetime import date
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 
@@ -32,9 +33,9 @@ def _build_snapshot(db: Session, user: User) -> str:
         extract("year", Transaction.date) == year,
         extract("month", Transaction.date) == month,
     )
-    income   = base.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    expenses = base.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
-    saved    = base.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or 0.0
+    income   = base.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
+    expenses = base.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
+    saved    = base.filter(Transaction.type == "savings").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
 
     goals = db.query(SavingsGoal).filter(SavingsGoal.user_id == user.id).all()
 
@@ -50,7 +51,7 @@ def _build_snapshot(db: Session, user: User) -> str:
                 extract("year", Transaction.date) == year,
                 extract("month", Transaction.date) == month,
             )
-            .scalar() or 0.0
+            .scalar() or Decimal("0.00")
         )
         if total > 0:
             cat_spending.append((cat.name, total))

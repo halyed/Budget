@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { SankeyController, Flow } from 'chartjs-chart-sankey';
 import { ApiService } from '../../core/services/api.service';
-import { AiService } from '../../core/services/ai.service';
 import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
+import { chartColors } from '../../core/utils/chart-colors';
 
 Chart.register(...registerables, SankeyController, Flow);
 
@@ -33,12 +33,6 @@ interface ReportData {
   category_trends: CategoryTrend[];
 }
 
-const CHART_COLORS = [
-  '#6366f1', '#f59e0b', '#10b981', '#ef4444',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
-  '#f97316', '#84cc16',
-];
-
 @Component({
   selector: 'app-reports',
   standalone: true,
@@ -55,10 +49,6 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
   loading = signal(true);
   error = signal<string | null>(null);
   data = signal<ReportData | null>(null);
-
-  insightsText = signal<string | null>(null);
-  insightsLoading = signal(false);
-  insightsError = signal<string | null>(null);
 
   periodOptions = [
     { label: 'Last 3 months', value: 3 },
@@ -104,7 +94,7 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
   private cashflowChart:  Chart | null = null;
   private pendingRender = false;
 
-  constructor(private api: ApiService, private aiService: AiService) {}
+  constructor(private api: ApiService) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -120,22 +110,6 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyCharts();
-  }
-
-  getInsights(): void {
-    this.insightsLoading.set(true);
-    this.insightsError.set(null);
-    this.insightsText.set(null);
-    this.aiService.getInsights(this.selectedMonths()).subscribe({
-      next: (res) => {
-        this.insightsText.set(res.insights);
-        this.insightsLoading.set(false);
-      },
-      error: (err) => {
-        this.insightsError.set(err.error?.detail ?? 'Failed to get insights.');
-        this.insightsLoading.set(false);
-      },
-    });
   }
 
   selectPeriod(months: number): void {
@@ -257,12 +231,13 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (!d || d.category_trends.length === 0) return [];
     const idx = this.selectedChartMonthIdx();
     const income = d.months[idx].income;
+    const colors = chartColors(d.category_trends.length);
     return d.category_trends
       .map((cat, i) => ({
         name: cat.category_name,
         amount: cat.amounts[idx],
         pct: income > 0 ? Math.round((cat.amounts[idx] / income) * 1000) / 10 : 0,
-        color: CHART_COLORS[i % CHART_COLORS.length],
+        color: colors[i],
       }))
       .filter(c => c.amount > 0)
       .sort((a, b) => b.amount - a.amount);
@@ -282,7 +257,7 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
         labels,
         datasets: [{
           data: amounts,
-          backgroundColor: d.category_trends.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+          backgroundColor: chartColors(d.category_trends.length),
           hoverOffset: 8,
         }],
       },

@@ -1,4 +1,5 @@
 from typing import Optional, List
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import extract
@@ -19,7 +20,7 @@ router = APIRouter()
 
 class BulkTransactionItem(BaseModel):
     description: Optional[str] = None
-    amount: float
+    amount: Decimal
     category_name: Optional[str] = None
     type: str  # income | expense
     day: int   # day of month (1–31)
@@ -41,16 +42,16 @@ class BulkImportResult(BaseModel):
 _SAVINGS_INVESTMENT_NAME = "Savings for Investments"
 
 
-def _adjust_savings(db: Session, user_id: int, delta: float):
+def _adjust_savings(db: Session, user_id: int, delta: Decimal):
     """Add delta to the user's dedicated savings investment, creating it if needed."""
     inv = db.query(Investment).filter(
         Investment.name == _SAVINGS_INVESTMENT_NAME,
         Investment.user_id == user_id,
     ).first()
     if inv:
-        inv.value = max(0.0, inv.value + delta)
+        inv.value = max(Decimal("0.00"), inv.value + delta)
     else:
-        inv = Investment(name=_SAVINGS_INVESTMENT_NAME, type="cash", value=max(0.0, delta), user_id=user_id)
+        inv = Investment(name=_SAVINGS_INVESTMENT_NAME, type="cash", value=max(Decimal("0.00"), delta), user_id=user_id)
         db.add(inv)
     db.flush()
 

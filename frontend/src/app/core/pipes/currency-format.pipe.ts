@@ -5,7 +5,7 @@ import { CurrencyService } from '../services/currency.service';
 export class CurrencyFormatPipe implements PipeTransform {
   private cs = inject(CurrencyService);
 
-  transform(value: number | null | undefined, digitsInfo: string = '1.0-0'): string {
+  transform(value: number | null | undefined, digitsInfo: string = '1.2-2'): string {
     if (value == null) return '';
     const match = digitsInfo.match(/\d+\.(\d+)-(\d+)/);
     const minFrac = match ? parseInt(match[1]) : 0;
