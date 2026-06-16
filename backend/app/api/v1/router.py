@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api.v1.routes import categories, transactions, investments, goals, dashboard, reports, ai
+from app.api.v1.routes import categories, transactions, investments, goals, dashboard, reports, ai, months
 from app.api.v1.routes import auth
 from app.core.deps import get_current_user
 
@@ -16,3 +16,4 @@ api_router.include_router(investments.router, prefix="/investments", tags=["Inve
 api_router.include_router(goals.router, prefix="/goals", tags=["Goals"], **_protected)
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"], **_protected)
 api_router.include_router(ai.router, prefix="/ai", tags=["AI"], **_protected)
+api_router.include_router(months.router, prefix="/months", tags=["Months"], **_protected)

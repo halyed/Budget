@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
 import { AiService } from '../../core/services/ai.service';
+import { MonthLockService } from '../../core/services/month-lock.service';
 import { Transaction, TransactionCreate } from '../../core/models/transaction.model';
 import { Category, CategoryCreate } from '../../core/models/category.model';
 import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
@@ -46,10 +47,15 @@ export class TransactionsComponent implements OnInit {
     return d.toLocaleString('default', { month: 'long', year: 'numeric' });
   });
 
+  // Month close/reopen
+  monthClosed   = signal(false);
+  monthLockBusy = signal(false);
+
   prevMonth(): void {
     if (this.selectedMonth() === 1) { this.selectedMonth.set(12); this.selectedYear.update(y => y - 1); }
     else { this.selectedMonth.update(m => m - 1); }
     this.loadTransactions(false);
+    this.loadMonthStatus();
   }
 
   // Lets users move into next month early (e.g. salary arrives before month-end)
@@ -58,6 +64,25 @@ export class TransactionsComponent implements OnInit {
     if (this.selectedMonth() === 12) { this.selectedMonth.set(1); this.selectedYear.update(y => y + 1); }
     else { this.selectedMonth.update(m => m + 1); }
     this.loadTransactions(false);
+    this.loadMonthStatus();
+  }
+
+  loadMonthStatus(): void {
+    this.monthLockService.getStatus(this.selectedMonth(), this.selectedYear()).subscribe({
+      next: s => this.monthClosed.set(s.closed),
+      error: () => {},
+    });
+  }
+
+  toggleMonthLock(): void {
+    this.monthLockBusy.set(true);
+    const action = this.monthClosed()
+      ? this.monthLockService.reopen(this.selectedMonth(), this.selectedYear())
+      : this.monthLockService.close(this.selectedMonth(), this.selectedYear());
+    action.subscribe({
+      next: s => { this.monthClosed.set(s.closed); this.monthLockBusy.set(false); },
+      error: () => this.monthLockBusy.set(false),
+    });
   }
 
   // Bulk import
@@ -91,11 +116,13 @@ export class TransactionsComponent implements OnInit {
     private transactionService: TransactionService,
     private categoryService: CategoryService,
     private aiService: AiService,
+    private monthLockService: MonthLockService,
   ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
     this.loadCategories();
+    this.loadMonthStatus();
   }
 
   // ── Transaction methods ───────────────────────────────────────
@@ -112,9 +139,13 @@ export class TransactionsComponent implements OnInit {
   saveTx(): void {
     if (!this.form.amount || !this.form.date) return;
     this.savingTx.set(true);
+    this.errorMsg.set(null);
     this.transactionService.create(this.form).subscribe({
       next: () => { this.showTxForm.set(false); this.savingTx.set(false); this.form = this.blankTx(); this.loadTransactions(); },
-      error: () => this.savingTx.set(false),
+      error: (err) => {
+        this.savingTx.set(false);
+        this.errorMsg.set(err?.error?.detail ?? 'Failed to create transaction.');
+      },
     });
   }
 
@@ -139,14 +170,18 @@ export class TransactionsComponent implements OnInit {
       },
       error: (err) => {
         this.savingTx.set(false);
-        this.errorMsg.set(`Update failed (${err?.status}): ${JSON.stringify(err?.error)}`);
+        this.errorMsg.set(err?.error?.detail ?? 'Failed to update transaction.');
       },
     });
   }
 
   deleteTx(id: number): void {
     if (!confirm('Delete this transaction?')) return;
-    this.transactionService.delete(id).subscribe(() => this.loadTransactions());
+    this.errorMsg.set(null);
+    this.transactionService.delete(id).subscribe({
+      next: () => this.loadTransactions(),
+      error: (err) => this.errorMsg.set(err?.error?.detail ?? 'Failed to delete transaction.'),
+    });
   }
 
   openBulk(): void { this.bulkResult.set(null); this.bulkError.set(null); this.showBulk.set(true); }

@@ -7,6 +7,7 @@ from datetime import date
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.month_lock import assert_month_open
 from app.models.transaction import Transaction
 from app.models.category import Category
 from app.models.investment import Investment
@@ -69,6 +70,8 @@ def bulk_import(
         year, month = int(year_str), int(month_str)
     except ValueError:
         raise HTTPException(status_code=422, detail="month must be in YYYY-MM format")
+
+    assert_month_open(db, current_user.id, year, month)
 
     # Pre-load category map scoped to current user
     categories = {
@@ -167,6 +170,7 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    assert_month_open(db, current_user.id, payload.date.year, payload.date.month)
     transaction = Transaction(**payload.model_dump(), user_id=current_user.id)
     db.add(transaction)
     if payload.type == "savings":
@@ -189,6 +193,9 @@ def update_transaction(
     ).first()
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    assert_month_open(db, current_user.id, t.date.year, t.date.month)
+    if payload.date is not None:
+        assert_month_open(db, current_user.id, payload.date.year, payload.date.month)
     old_type = t.type
     old_amount = t.amount
     for field, value in payload.model_dump(exclude_none=True).items():
@@ -217,6 +224,7 @@ def delete_transaction(
     ).first()
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    assert_month_open(db, current_user.id, t.date.year, t.date.month)
     if t.type == "savings":
         _adjust_savings(db, current_user.id, -t.amount)
     db.delete(t)
