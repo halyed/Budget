@@ -47,6 +47,13 @@ export class TransactionsComponent implements OnInit {
     return d.toLocaleString('default', { month: 'long', year: 'numeric' });
   });
 
+  // A past month is automatically and permanently closed server-side — no toggle for it.
+  isPastMonth = computed(() => {
+    const ty = this.today.getFullYear();
+    const tm = this.today.getMonth() + 1;
+    return this.selectedYear() < ty || (this.selectedYear() === ty && this.selectedMonth() < tm);
+  });
+
   // Month close/reopen
   monthClosed   = signal(false);
   monthLockBusy = signal(false);
