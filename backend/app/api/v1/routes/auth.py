@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.email_service import send_verification_email
+from app.core.email_service import send_verification_email, send_password_reset_email
 from app.core.limiter import limiter
 from app.core.security import (
     create_access_token,
@@ -21,22 +22,27 @@ from app.core.security import (
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.models.verification_token import VerificationToken
+from app.models.password_reset_token import PasswordResetToken
 from app.schemas.auth import (
     ChangePasswordRequest,
+    ForgotPasswordRequest,
     LoginRequest,
     MessageResponse,
     RegisterRequest,
     ResendVerificationRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserResponse,
     VerifyEmailRequest,
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 _COOKIE = "refresh_token"
 _COOKIE_PATH = "/api/v1/auth"
 _VERIFY_TOKEN_EXPIRE_HOURS = 24
+_RESET_TOKEN_EXPIRE_HOURS = 1
 
 
 def _set_refresh_cookie(response: Response, raw_token: str) -> None:
@@ -146,6 +152,77 @@ def resend_verification(
 
     _create_and_send_verification(user, db)
     return MessageResponse(message="If that email is registered and unverified, a new link has been sent.")
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+@limiter.limit("3/hour")
+def forgot_password(
+    request: Request,
+    body: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    user = db.query(User).filter(User.email == body.email).first()
+
+    # Always return the same message to avoid leaking whether an email exists
+    generic_message = "If that email is registered, a password reset link has been sent."
+    if not user:
+        return MessageResponse(message=generic_message)
+
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=_RESET_TOKEN_EXPIRE_HOURS)
+
+    # Invalidate any previous unused reset tokens for this user
+    db.query(PasswordResetToken).filter(
+        PasswordResetToken.user_id == user.id,
+        PasswordResetToken.used == False,
+    ).update({"used": True})
+
+    db.add(PasswordResetToken(user_id=user.id, token_hash=token_hash, expires_at=expires_at))
+    db.commit()
+
+    try:
+        send_password_reset_email(user.email, raw_token)
+    except Exception:
+        logger.exception("Failed to send password reset email to %s", user.email)
+
+    return MessageResponse(message=generic_message)
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+@limiter.limit("5/minute")
+def reset_password(
+    request: Request,
+    body: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+
+    record = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token_hash == token_hash,
+        PasswordResetToken.used == False,
+        PasswordResetToken.expires_at > datetime.now(timezone.utc),
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link.")
+
+    user = db.get(User, record.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.password_hash = hash_password(body.new_password)
+    record.used = True
+
+    # Revoke all existing sessions so a stolen token can't be reused after reset
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id,
+        RefreshToken.revoked == False,
+    ).update({"revoked": True})
+
+    db.commit()
+
+    return MessageResponse(message="Password reset successfully. You can now sign in.")
 
 
 @router.post("/login", response_model=TokenResponse)
