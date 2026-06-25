@@ -25,6 +25,7 @@ export class LoginComponent {
     : '');
   showResend = signal(false);
   resendSent = signal(false);
+  showPassword = signal(false);
 
   onSubmit(): void {
     this.loading.set(true);

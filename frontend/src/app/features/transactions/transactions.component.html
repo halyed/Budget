@@ -145,53 +145,55 @@
       </div>
     }
 
-    <!-- Edit transaction form -->
+    <!-- Edit transaction modal -->
     @if (editingTxId() !== null) {
-      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-amber-200">
-        <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Transaction</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Date</label>
-            <input type="date" [(ngModel)]="editTxForm.date"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+      <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="cancelEditTx()">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Edit Transaction</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Date</label>
+              <input type="date" [(ngModel)]="editTxForm.date"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
+              <input type="number" [(ngModel)]="editTxForm.amount" min="0" step="0.01"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Type</label>
+              <select [(ngModel)]="editTxForm.type"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+                <option value="savings">Savings</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Category</label>
+              <select [(ngModel)]="editTxForm.category_id"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                <option [ngValue]="null">— None —</option>
+                @for (cat of categories(); track cat.id) {
+                  <option [ngValue]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs text-gray-500 mb-1">Description</label>
+              <input type="text" [(ngModel)]="editTxForm.description"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Amount (€)</label>
-            <input type="number" [(ngModel)]="editTxForm.amount" min="0" step="0.01"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          <div class="flex gap-2 justify-end mt-5">
+            <button (click)="cancelEditTx()"
+              class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+            <button (click)="saveEditTx()" [disabled]="savingTx()"
+              class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+              {{ savingTx() ? 'Saving...' : 'Update' }}
+            </button>
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Type</label>
-            <select [(ngModel)]="editTxForm.type"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-              <option value="savings">Savings</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Category</label>
-            <select [(ngModel)]="editTxForm.category_id"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-              <option [ngValue]="null">— None —</option>
-              @for (cat of categories(); track cat.id) {
-                <option [ngValue]="cat.id">{{ cat.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs text-gray-500 mb-1">Description</label>
-            <input type="text" [(ngModel)]="editTxForm.description"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-          </div>
-        </div>
-        <div class="flex gap-3 mt-4">
-          <button (click)="saveEditTx()" [disabled]="savingTx()"
-            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-            {{ savingTx() ? 'Saving...' : 'Update' }}
-          </button>
-          <button (click)="cancelEditTx()"
-            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
         </div>
       </div>
     }
@@ -372,48 +374,50 @@
       </div>
     }
 
-    <!-- Edit category form -->
+    <!-- Edit category modal -->
     @if (editingCatId() !== null) {
-      <div class="bg-white rounded-xl shadow p-5 mb-4 border border-amber-200">
-        <h3 class="text-base font-semibold text-gray-700 mb-4">Edit Category</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Name</label>
-            <input type="text" [(ngModel)]="editCatForm.name"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+      <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="cancelEditCat()">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Category</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Name</label>
+              <input type="text" [(ngModel)]="editCatForm.name"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Type</label>
+              <select [(ngModel)]="editCatForm.type"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                @for (t of catTypes; track t) {
+                  <option [value]="t">{{ t | titlecase }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Planned Amount (€)</label>
+              <input type="number" [(ngModel)]="editCatForm.planned_amount" min="0" step="0.01"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Icon</label>
+              <input type="text" [(ngModel)]="editCatForm.icon"
+                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Color</label>
+              <input type="color" [(ngModel)]="editCatForm.color"
+                class="h-10 w-full border rounded-lg px-1 py-1 focus:outline-none focus:ring-2 focus:ring-amber-300" />
+            </div>
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Type</label>
-            <select [(ngModel)]="editCatForm.type"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-              @for (t of catTypes; track t) {
-                <option [value]="t">{{ t | titlecase }}</option>
-              }
-            </select>
+          <div class="flex gap-2 justify-end mt-5">
+            <button (click)="cancelEditCat()"
+              class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+            <button (click)="saveEditCat()" [disabled]="savingCat()"
+              class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+              {{ savingCat() ? 'Saving...' : 'Update' }}
+            </button>
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Planned Amount (€)</label>
-            <input type="number" [(ngModel)]="editCatForm.planned_amount" min="0" step="0.01"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Icon</label>
-            <input type="text" [(ngModel)]="editCatForm.icon"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Color</label>
-            <input type="color" [(ngModel)]="editCatForm.color"
-              class="h-10 w-full border rounded-lg px-1 py-1 focus:outline-none focus:ring-2 focus:ring-amber-300" />
-          </div>
-        </div>
-        <div class="flex gap-3 mt-4">
-          <button (click)="saveEditCat()" [disabled]="savingCat()"
-            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-            {{ savingCat() ? 'Saving...' : 'Update' }}
-          </button>
-          <button (click)="cancelEditCat()"
-            class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
         </div>
       </div>
     }
