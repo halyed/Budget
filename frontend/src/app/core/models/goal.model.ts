@@ -3,6 +3,7 @@ export interface LinkedInvestment {
   name: string;
   type: string;
   value: number;
+  invested_amount: number;
 }
 
 export interface SavingsGoal {

@@ -29,8 +29,21 @@ export class TransactionsComponent implements OnInit {
   form: TransactionCreate     = this.blankTx();
   editTxForm: TransactionCreate = this.blankTx();
 
+  // Filter — matches description, category, or type (e.g. typing "income" filters to income)
+  txSearch = signal('');
+
+  filteredTransactions = computed(() => {
+    const query = this.txSearch().trim().toLowerCase();
+    if (!query) return this.transactions();
+    return this.transactions().filter(t =>
+      (t.description ?? '').toLowerCase().includes(query)
+      || (t.category?.name ?? '').toLowerCase().includes(query)
+      || t.type.toLowerCase().includes(query)
+    );
+  });
+
   visibleTransactions = computed(() =>
-    this.showAllTx() ? this.transactions() : this.transactions().slice(0, 5)
+    this.showAllTx() ? this.filteredTransactions() : this.filteredTransactions().slice(0, 5)
   );
 
   // AI category suggestion

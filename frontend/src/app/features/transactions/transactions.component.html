@@ -43,6 +43,13 @@
       <p class="mb-4 text-sm text-red-600 bg-red-50 rounded px-3 py-2">{{ errorMsg() }}</p>
     }
 
+    <!-- Filter -->
+    <div class="flex justify-end mb-4">
+      <input type="text" [ngModel]="txSearch()" (ngModelChange)="txSearch.set($event)"
+        placeholder="Filter by description, category or type..."
+        class="w-full max-w-xs border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+    </div>
+
     <!-- Bulk import modal -->
     @if (showBulk()) {
       <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="showBulk.set(false)">
@@ -208,6 +215,8 @@
     @if (!loadingTx()) {
       @if (transactions().length === 0) {
         <p class="text-center text-gray-400 py-10">No transactions for {{ selectedLabel() }}.</p>
+      } @else if (filteredTransactions().length === 0) {
+        <p class="text-center text-gray-400 py-10">No transactions match your search/filter.</p>
       } @else {
 
         <!-- Mobile cards -->
@@ -292,22 +301,22 @@
           </div>
 
           <!-- Show all / show less toggle -->
-          @if (transactions().length > 5) {
+          @if (filteredTransactions().length > 5) {
             <div class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
               <button (click)="showAllTx.set(!showAllTx())"
                 class="text-xs text-indigo-600 font-medium hover:underline">
-                {{ showAllTx() ? 'Show less' : 'Show all ' + transactions().length + ' transactions' }}
+                {{ showAllTx() ? 'Show less' : 'Show all ' + filteredTransactions().length + ' transactions' }}
               </button>
             </div>
           }
         </div>
 
         <!-- Mobile show all toggle -->
-        @if (transactions().length > 5) {
+        @if (filteredTransactions().length > 5) {
           <div class="md:hidden text-center mt-2">
             <button (click)="showAllTx.set(!showAllTx())"
               class="text-xs text-indigo-600 font-medium hover:underline">
-              {{ showAllTx() ? 'Show less' : 'Show all ' + transactions().length + ' transactions' }}
+              {{ showAllTx() ? 'Show less' : 'Show all ' + filteredTransactions().length + ' transactions' }}
             </button>
           </div>
         }

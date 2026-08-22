@@ -38,22 +38,53 @@
           @if (investments().length === 0) {
             <p class="text-xs text-gray-400">No investments yet — add some below first.</p>
           } @else {
-            <div class="flex flex-wrap gap-2">
-              @for (inv of investments(); track inv.id) {
-                <button type="button" (click)="toggleInvestment(goalForm, inv.id)"
-                  class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                  [class.bg-indigo-600]="isLinked(goalForm, inv.id)"
-                  [class.text-white]="isLinked(goalForm, inv.id)"
-                  [class.border-indigo-600]="isLinked(goalForm, inv.id)"
-                  [class.bg-white]="!isLinked(goalForm, inv.id)"
-                  [class.text-gray-600]="!isLinked(goalForm, inv.id)"
-                  [class.border-gray-300]="!isLinked(goalForm, inv.id)">
-                  {{ inv.name }} · {{ inv.value | currencyFormat }}
-                </button>
+            <p class="text-xs text-gray-400 mb-2">Click a primary to link all of it, or expand ▾ to pick specific items.</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+              @for (group of groupedInv(); track group.type) {
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-1">
+                    <button type="button" (click)="toggleInvestmentType(goalForm, group.type)"
+                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      [class.bg-indigo-600]="isTypeLinked(goalForm, group.type)"
+                      [class.text-white]="isTypeLinked(goalForm, group.type)"
+                      [class.border-indigo-600]="isTypeLinked(goalForm, group.type)"
+                      [class.bg-indigo-50]="isTypePartiallyLinked(goalForm, group.type)"
+                      [class.text-indigo-700]="isTypePartiallyLinked(goalForm, group.type)"
+                      [class.border-indigo-300]="isTypePartiallyLinked(goalForm, group.type)"
+                      [class.bg-white]="!isTypeLinked(goalForm, group.type) && !isTypePartiallyLinked(goalForm, group.type)"
+                      [class.text-gray-600]="!isTypeLinked(goalForm, group.type) && !isTypePartiallyLinked(goalForm, group.type)"
+                      [class.border-gray-300]="!isTypeLinked(goalForm, group.type) && !isTypePartiallyLinked(goalForm, group.type)">
+                      {{ group.type.split('_').join(' ') | titlecase }} · {{ group.value | currencyFormat }}
+                    </button>
+                    @if (group.items.length > 1) {
+                      <button type="button" (click)="toggleTypeExpanded(group.type)"
+                        class="text-xs text-gray-400 hover:text-indigo-600 px-1"
+                        [title]="isTypeExpanded(group.type) ? 'Hide items' : 'Choose specific items'">
+                        {{ isTypeExpanded(group.type) ? '▲' : '▾' }}
+                      </button>
+                    }
+                  </div>
+                  @if (isTypeExpanded(group.type)) {
+                    <div class="flex flex-wrap gap-1.5 pl-2 border-l-2 border-indigo-100">
+                      @for (inv of group.items; track inv.id) {
+                        <button type="button" (click)="toggleInvestment(goalForm, inv.id)"
+                          class="px-2 py-1 rounded-full text-[11px] font-medium border transition-colors"
+                          [class.bg-indigo-600]="isLinked(goalForm, inv.id)"
+                          [class.text-white]="isLinked(goalForm, inv.id)"
+                          [class.border-indigo-600]="isLinked(goalForm, inv.id)"
+                          [class.bg-white]="!isLinked(goalForm, inv.id)"
+                          [class.text-gray-500]="!isLinked(goalForm, inv.id)"
+                          [class.border-gray-300]="!isLinked(goalForm, inv.id)">
+                          {{ inv.name }} · {{ inv.value | currencyFormat }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </div>
             @if (goalForm.investment_ids.length > 0) {
-              <p class="text-xs text-indigo-600 mt-1">Current amount will be taken automatically from linked investments.</p>
+              <p class="text-xs text-indigo-600 mt-2">Current amount will be taken automatically from linked investments.</p>
             }
           }
         </div>
@@ -70,9 +101,10 @@
   }
 
   @if (editingGoalId() !== null) {
-    <div class="bg-white rounded-xl shadow p-5 border border-amber-200">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Goal</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="cancelEditGoal()">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Edit Goal</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1">Name</label>
           <input type="text" [(ngModel)]="editGoalForm.name"
@@ -98,33 +130,65 @@
           @if (investments().length === 0) {
             <p class="text-xs text-gray-400">No investments yet.</p>
           } @else {
-            <div class="flex flex-wrap gap-2">
-              @for (inv of investments(); track inv.id) {
-                <button type="button" (click)="toggleInvestment(editGoalForm, inv.id)"
-                  class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                  [class.bg-amber-500]="isLinked(editGoalForm, inv.id)"
-                  [class.text-white]="isLinked(editGoalForm, inv.id)"
-                  [class.border-amber-500]="isLinked(editGoalForm, inv.id)"
-                  [class.bg-white]="!isLinked(editGoalForm, inv.id)"
-                  [class.text-gray-600]="!isLinked(editGoalForm, inv.id)"
-                  [class.border-gray-300]="!isLinked(editGoalForm, inv.id)">
-                  {{ inv.name }} · {{ inv.value | currencyFormat }}
-                </button>
+            <p class="text-xs text-gray-400 mb-2">Click a primary to link all of it, or expand ▾ to pick specific items.</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+              @for (group of groupedInv(); track group.type) {
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-1">
+                    <button type="button" (click)="toggleInvestmentType(editGoalForm, group.type)"
+                      class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      [class.bg-amber-500]="isTypeLinked(editGoalForm, group.type)"
+                      [class.text-white]="isTypeLinked(editGoalForm, group.type)"
+                      [class.border-amber-500]="isTypeLinked(editGoalForm, group.type)"
+                      [class.bg-amber-50]="isTypePartiallyLinked(editGoalForm, group.type)"
+                      [class.text-amber-700]="isTypePartiallyLinked(editGoalForm, group.type)"
+                      [class.border-amber-300]="isTypePartiallyLinked(editGoalForm, group.type)"
+                      [class.bg-white]="!isTypeLinked(editGoalForm, group.type) && !isTypePartiallyLinked(editGoalForm, group.type)"
+                      [class.text-gray-600]="!isTypeLinked(editGoalForm, group.type) && !isTypePartiallyLinked(editGoalForm, group.type)"
+                      [class.border-gray-300]="!isTypeLinked(editGoalForm, group.type) && !isTypePartiallyLinked(editGoalForm, group.type)">
+                      {{ group.type.split('_').join(' ') | titlecase }} · {{ group.value | currencyFormat }}
+                    </button>
+                    @if (group.items.length > 1) {
+                      <button type="button" (click)="toggleTypeExpanded(group.type)"
+                        class="text-xs text-gray-400 hover:text-amber-600 px-1"
+                        [title]="isTypeExpanded(group.type) ? 'Hide items' : 'Choose specific items'">
+                        {{ isTypeExpanded(group.type) ? '▲' : '▾' }}
+                      </button>
+                    }
+                  </div>
+                  @if (isTypeExpanded(group.type)) {
+                    <div class="flex flex-wrap gap-1.5 pl-2 border-l-2 border-amber-100">
+                      @for (inv of group.items; track inv.id) {
+                        <button type="button" (click)="toggleInvestment(editGoalForm, inv.id)"
+                          class="px-2 py-1 rounded-full text-[11px] font-medium border transition-colors"
+                          [class.bg-amber-500]="isLinked(editGoalForm, inv.id)"
+                          [class.text-white]="isLinked(editGoalForm, inv.id)"
+                          [class.border-amber-500]="isLinked(editGoalForm, inv.id)"
+                          [class.bg-white]="!isLinked(editGoalForm, inv.id)"
+                          [class.text-gray-500]="!isLinked(editGoalForm, inv.id)"
+                          [class.border-gray-300]="!isLinked(editGoalForm, inv.id)">
+                          {{ inv.name }} · {{ inv.value | currencyFormat }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </div>
             @if (editGoalForm.investment_ids.length > 0) {
-              <p class="text-xs text-amber-600 mt-1">Current amount will be taken automatically from linked investments.</p>
+              <p class="text-xs text-amber-600 mt-2">Current amount will be taken automatically from linked investments.</p>
             }
           }
         </div>
-      </div>
-      <div class="flex gap-3 mt-4">
-        <button (click)="saveEditGoal()" [disabled]="savingGoal()"
-          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-          {{ savingGoal() ? 'Saving...' : 'Update' }}
-        </button>
-        <button (click)="cancelEditGoal()"
-          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+        <div class="flex gap-2 justify-end mt-5">
+          <button (click)="cancelEditGoal()"
+            class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button (click)="saveEditGoal()" [disabled]="savingGoal()"
+            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+            {{ savingGoal() ? 'Saving...' : 'Update' }}
+          </button>
+        </div>
       </div>
     </div>
   }
@@ -155,14 +219,12 @@
             </div>
           </div>
 
-          <!-- Linked investments -->
+          <!-- Linked investments, summarized by type -->
           @if (goal.linked_investments.length > 0) {
             <div class="flex flex-wrap gap-2 mb-3">
-              @for (inv of goal.linked_investments; track inv.id) {
+              @for (g of goalLinkedByType(goal); track g.type) {
                 <span class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100">
-                  <span class="capitalize">{{ inv.type }}</span>
-                  · {{ inv.name }}
-                  · {{ inv.value | currencyFormat }}
+                  {{ g.type.split('_').join(' ') | titlecase }} · {{ g.value | currencyFormat }}
                 </span>
               }
             </div>
@@ -176,16 +238,31 @@
             </span>
             <span>{{ goal.target_amount | currencyFormat }}</span>
           </div>
-          <div class="w-full bg-gray-100 rounded-full h-3">
-            <div class="bg-indigo-500 h-3 rounded-full transition-all"
-              [style.width.%]="goal.progress_pct > 100 ? 100 : goal.progress_pct"></div>
+          <!-- Progress bar: indigo segment = amount invested, green segment = gain on top -->
+          <div class="w-full bg-gray-100 rounded-full h-3 flex overflow-hidden">
+            <div class="bg-indigo-500 h-3 transition-all" [style.width.%]="goalInvestedPct(goal)"></div>
+            <div class="bg-green-500 h-3 transition-all" [style.width.%]="goalGainPct(goal)"></div>
           </div>
-          <p class="text-right text-sm font-medium mt-1"
-            [class.text-indigo-600]="goal.progress_pct < 100"
-            [class.text-green-600]="goal.progress_pct >= 100">
-            {{ goal.progress_pct }}%
-            @if (goal.progress_pct >= 100) { · Goal reached! }
-          </p>
+          <div class="flex justify-between items-center mt-1">
+            @if (goal.linked_investments.length > 0) {
+              <p class="text-xs text-gray-400">
+                <span class="text-indigo-600">● Invested</span>
+                @if (goalGain(goal) !== 0) {
+                  <span class="ml-2" [class.text-green-600]="goalGain(goal) > 0" [class.text-red-500]="goalGain(goal) < 0">
+                    ● {{ goalGain(goal) > 0 ? 'Gain' : 'Loss' }} {{ goalGain(goal) > 0 ? '+' : '' }}{{ goalGain(goal) | currencyFormat }}
+                  </span>
+                }
+              </p>
+            } @else {
+              <span></span>
+            }
+            <p class="text-sm font-medium"
+              [class.text-indigo-600]="goal.progress_pct < 100"
+              [class.text-green-600]="goal.progress_pct >= 100">
+              {{ goal.progress_pct }}%
+              @if (goal.progress_pct >= 100) { · Goal reached! }
+            </p>
+          </div>
         </div>
       } @empty {
         <p class="text-center text-gray-400 py-6">No goals yet. Add your first one above.</p>
@@ -211,7 +288,7 @@
   @if (showInvForm()) {
     <div class="bg-white rounded-xl shadow p-5 border border-indigo-100">
       <h2 class="text-base font-semibold text-gray-700 mb-4">New Investment</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1">Name</label>
           <input type="text" [(ngModel)]="invForm.name"
@@ -229,7 +306,13 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
+          <label class="block text-xs text-gray-500 mb-1">Invested (€)</label>
+          <input type="number" [(ngModel)]="invForm.invested_amount" min="0" step="0.01"
+            title="Amount originally put in — used to compute gain/loss"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Current Value (€)</label>
           <input type="number" [(ngModel)]="invForm.value" min="0" step="0.01"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
@@ -246,38 +329,46 @@
   }
 
   @if (editingInvId() !== null) {
-    <div class="bg-white rounded-xl shadow p-5 border border-amber-200">
-      <h2 class="text-base font-semibold text-gray-700 mb-4">Edit Investment</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Name</label>
-          <input type="text" [(ngModel)]="editInvForm.name"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" (click)="cancelEditInv()">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" (click)="$event.stopPropagation()">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Edit Investment</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Name</label>
+            <input type="text" [(ngModel)]="editInvForm.name"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Type</label>
+            <select [(ngModel)]="editInvForm.type"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+              <option value="etf">ETF</option>
+              <option value="stocks">Stocks</option>
+              <option value="crypto">Crypto</option>
+              <option value="cash">Cash</option>
+              <option value="real_estate">Real Estate</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Invested (€)</label>
+            <input type="number" [(ngModel)]="editInvForm.invested_amount" min="0" step="0.01"
+              title="Amount originally put in — used to compute gain/loss"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Current Value (€)</label>
+            <input type="number" [(ngModel)]="editInvForm.value" min="0" step="0.01"
+              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
+          </div>
         </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Type</label>
-          <select [(ngModel)]="editInvForm.type"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-            <option value="etf">ETF</option>
-            <option value="stocks">Stocks</option>
-            <option value="crypto">Crypto</option>
-            <option value="cash">Cash</option>
-            <option value="real_estate">Real Estate</option>
-          </select>
+        <div class="flex gap-2 justify-end mt-5">
+          <button (click)="cancelEditInv()"
+            class="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button (click)="saveEditInv()" [disabled]="savingInv()"
+            class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+            {{ savingInv() ? 'Saving...' : 'Update' }}
+          </button>
         </div>
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Value (€)</label>
-          <input type="number" [(ngModel)]="editInvForm.value" min="0" step="0.01"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300" />
-        </div>
-      </div>
-      <div class="flex gap-3 mt-4">
-        <button (click)="saveEditInv()" [disabled]="savingInv()"
-          class="bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-          {{ savingInv() ? 'Saving...' : 'Update' }}
-        </button>
-        <button (click)="cancelEditInv()"
-          class="border px-5 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
       </div>
     </div>
   }
@@ -287,22 +378,46 @@
       <span class="animate-spin text-lg">⟳</span> Loading...
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      @for (inv of investments(); track inv.id) {
-        <div class="bg-white rounded-xl shadow p-5"
-          [class.border-2]="editingInvId() === inv.id"
-          [class.border-amber-300]="editingInvId() === inv.id">
-          <p class="text-sm text-gray-500 capitalize">{{ inv.type }}</p>
-          <p class="text-xl font-bold text-gray-800 mt-1">{{ inv.name }}</p>
-          <p class="text-2xl font-bold text-indigo-600 mt-2">{{ inv.value | currencyFormat }}</p>
-          <p class="text-xs text-gray-400 mt-2">Updated {{ inv.updated_at | date:'mediumDate' }}</p>
-          <div class="flex gap-3 mt-3">
-            <button (click)="startEditInv(inv)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
-            <button (click)="deleteInv(inv.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+    <!-- Groups flow side by side when they fit (e.g. a 1-item Crypto group next to a
+         1-item Cash group); each falls back to a full-width single column on mobile. -->
+    <div class="flex flex-wrap gap-6 items-start">
+      @for (group of groupedInv(); track group.type) {
+        <!-- Each type is a single white card, so it's visually clear where it begins and ends -->
+        <div class="w-full sm:w-auto bg-white rounded-xl shadow p-4">
+          <div class="flex flex-wrap justify-between items-baseline gap-x-3 gap-y-1 mb-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ group.type.split('_').join(' ') | titlecase }}</h3>
+            <div class="text-sm text-gray-500">
+              {{ group.value | currencyFormat }}
+              @if (group.growthPct !== null) {
+                <span class="ml-1.5 font-medium" [class.text-green-600]="group.growth >= 0" [class.text-red-500]="group.growth < 0">
+                  {{ group.growth >= 0 ? '+' : '' }}{{ group.growth | currencyFormat }} ({{ group.growthPct | number:'1.1-1' }}%)
+                </span>
+              }
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            @for (inv of group.items; track inv.id) {
+              <div class="w-full sm:w-56 bg-gray-50 rounded-lg border border-gray-100 p-4"
+                [class.border-2]="editingInvId() === inv.id"
+                [class.border-amber-300]="editingInvId() === inv.id">
+                <p class="text-lg font-bold text-gray-800">{{ inv.name }}</p>
+                <p class="text-xl font-bold text-indigo-600 mt-2">{{ inv.value | currencyFormat }}</p>
+                @if (growthPct(inv) !== null) {
+                  <p class="text-xs font-medium mt-1" [class.text-green-600]="growth(inv) >= 0" [class.text-red-500]="growth(inv) < 0">
+                    {{ growth(inv) >= 0 ? '+' : '' }}{{ growth(inv) | currencyFormat }} ({{ growthPct(inv) | number:'1.1-1' }}%)
+                  </p>
+                }
+                <p class="text-xs text-gray-400 mt-2">Updated {{ inv.updated_at | date:'mediumDate' }}</p>
+                <div class="flex gap-3 mt-3">
+                  <button (click)="startEditInv(inv)" class="text-xs text-indigo-500 hover:text-amber-600">Edit</button>
+                  <button (click)="deleteInv(inv.id)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+                </div>
+              </div>
+            }
           </div>
         </div>
       } @empty {
-        <p class="text-gray-400 text-sm py-6 sm:col-span-3 text-center">No investments yet.</p>
+        <p class="text-gray-400 text-sm py-6 text-center">No investments yet.</p>
       }
     </div>
   }

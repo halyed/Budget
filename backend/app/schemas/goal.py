@@ -10,6 +10,7 @@ class LinkedInvestment(BaseModel):
     name: str
     type: str
     value: DecimalAsFloat
+    invested_amount: DecimalAsFloat
 
     model_config = {"from_attributes": True}
 

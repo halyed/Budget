@@ -8,6 +8,7 @@ class InvestmentBase(BaseModel):
     name: str
     type: str  # etf, crypto, cash, stocks
     value: DecimalAsFloat
+    invested_amount: DecimalAsFloat = 0
 
 
 class InvestmentCreate(InvestmentBase):
@@ -18,6 +19,7 @@ class InvestmentUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     value: Optional[DecimalAsFloat] = None
+    invested_amount: Optional[DecimalAsFloat] = None
 
 
 class InvestmentRead(InvestmentBase):

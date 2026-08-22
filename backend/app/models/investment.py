@@ -12,5 +12,6 @@ class Investment(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[str] = mapped_column(String(20), nullable=False)  # etf, crypto, cash, stocks, real_estate
     value: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    invested_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)

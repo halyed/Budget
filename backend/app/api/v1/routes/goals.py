@@ -21,7 +21,7 @@ def _to_read(goal: SavingsGoal) -> GoalRead:
         current_amount=round(current, 2),
         target_date=goal.target_date,
         linked_investments=[
-            LinkedInvestment(id=i.id, name=i.name, type=i.type, value=i.value)
+            LinkedInvestment(id=i.id, name=i.name, type=i.type, value=i.value, invested_amount=i.invested_amount)
             for i in linked
         ],
     )

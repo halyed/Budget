@@ -23,6 +23,27 @@ export class InvestmentsComponent implements OnInit {
 
   total = computed(() => this.investments().reduce((s, i) => s + i.value, 0));
 
+  readonly investmentTypes = ['etf', 'stocks', 'crypto', 'cash', 'real_estate'] as const;
+
+  // Investments grouped by type, each with its own subtotal and growth
+  // (current value vs. what was originally put in) — e.g. all "cash" entries
+  // (Emergency savings, Holiday fund...) collapse into one Cash section.
+  groupedInv = computed(() => {
+    const groups: { type: string; items: Investment[]; value: number; invested: number; growth: number; growthPct: number | null }[] = [];
+    for (const type of this.investmentTypes) {
+      const items = this.investments().filter(i => i.type === type);
+      if (items.length === 0) continue;
+      const value = items.reduce((s, i) => s + i.value, 0);
+      const invested = items.reduce((s, i) => s + i.invested_amount, 0);
+      const growth = value - invested;
+      groups.push({ type, items, value, invested, growth, growthPct: invested > 0 ? (growth / invested) * 100 : null });
+    }
+    return groups;
+  });
+
+  growth(inv: Investment): number { return inv.value - inv.invested_amount; }
+  growthPct(inv: Investment): number | null { return inv.invested_amount > 0 ? (this.growth(inv) / inv.invested_amount) * 100 : null; }
+
   editInvForm: InvestmentCreate = this.blankInv();
   invForm: InvestmentCreate = this.blankInv();
 
@@ -62,7 +83,7 @@ export class InvestmentsComponent implements OnInit {
   }
 
   startEditInv(inv: Investment): void {
-    this.editInvForm = { name: inv.name, type: inv.type, value: inv.value };
+    this.editInvForm = { name: inv.name, type: inv.type, value: inv.value, invested_amount: inv.invested_amount };
     this.showInvForm.set(false);
     this.editingInvId.set(inv.id);
   }
@@ -84,7 +105,7 @@ export class InvestmentsComponent implements OnInit {
     this.investmentService.delete(id).subscribe(() => { this.loadInvestments(); this.loadGoals(); });
   }
 
-  private blankInv(): InvestmentCreate { return { name: '', type: 'etf', value: 0 }; }
+  private blankInv(): InvestmentCreate { return { name: '', type: 'etf', value: 0, invested_amount: 0 }; }
 
   // --- Goal methods ---
 
@@ -130,6 +151,30 @@ export class InvestmentsComponent implements OnInit {
     this.goalService.delete(id).subscribe(() => this.loadGoals());
   }
 
+  // Linking a type ("primary") is a shortcut that links/unlinks every investment of
+  // that type at once. Each type can also be expanded to hand-pick individual
+  // investments within it (e.g. link "House fund" but not "Emergency savings").
+  toggleInvestmentType(form: GoalCreate, type: string): void {
+    const groupIds = this.investments().filter(i => i.type === type).map(i => i.id);
+    const allLinked = groupIds.every(id => form.investment_ids.includes(id));
+    form.investment_ids = allLinked
+      ? form.investment_ids.filter(id => !groupIds.includes(id))
+      : Array.from(new Set([...form.investment_ids, ...groupIds]));
+  }
+
+  isTypeLinked(form: GoalCreate, type: string): boolean {
+    const groupIds = this.investments().filter(i => i.type === type).map(i => i.id);
+    return groupIds.length > 0 && groupIds.every(id => form.investment_ids.includes(id));
+  }
+
+  // True when only some (not all) investments of a type are linked — shown as a
+  // distinct "partial" chip state so it's clear the primary isn't fully selected.
+  isTypePartiallyLinked(form: GoalCreate, type: string): boolean {
+    const groupIds = this.investments().filter(i => i.type === type).map(i => i.id);
+    const linkedCount = groupIds.filter(id => form.investment_ids.includes(id)).length;
+    return linkedCount > 0 && linkedCount < groupIds.length;
+  }
+
   toggleInvestment(form: GoalCreate, invId: number): void {
     const idx = form.investment_ids.indexOf(invId);
     if (idx === -1) form.investment_ids = [...form.investment_ids, invId];
@@ -138,6 +183,54 @@ export class InvestmentsComponent implements OnInit {
 
   isLinked(form: GoalCreate, invId: number): boolean {
     return form.investment_ids.includes(invId);
+  }
+
+  // Which type sections are expanded to show their individual investments, per goal form.
+  expandedTypes = signal<Set<string>>(new Set());
+
+  toggleTypeExpanded(type: string): void {
+    const next = new Set(this.expandedTypes());
+    if (next.has(type)) next.delete(type); else next.add(type);
+    this.expandedTypes.set(next);
+  }
+
+  isTypeExpanded(type: string): boolean {
+    return this.expandedTypes().has(type);
+  }
+
+  // --- Goal progress bar: invested vs. gained, stacked as two colored segments ---
+
+  private goalInvestedTotal(goal: SavingsGoal): number {
+    return goal.linked_investments.reduce((s, i) => s + i.invested_amount, 0);
+  }
+
+  goalGain(goal: SavingsGoal): number {
+    return goal.current_amount - this.goalInvestedTotal(goal);
+  }
+
+  // % width of the "invested" segment, capped so it never exceeds the actual progress bar
+  goalInvestedPct(goal: SavingsGoal): number {
+    if (goal.target_amount <= 0) return 0;
+    const investedPct = (this.goalInvestedTotal(goal) / goal.target_amount) * 100;
+    const currentPct = Math.min(100, goal.progress_pct);
+    return Math.max(0, Math.min(investedPct, currentPct));
+  }
+
+  // % width of the "gained" segment, stacked right after the invested one
+  goalGainPct(goal: SavingsGoal): number {
+    const currentPct = Math.min(100, goal.progress_pct);
+    return Math.max(0, currentPct - this.goalInvestedPct(goal));
+  }
+
+  // Linked investments summarized by type (e.g. "Cash · 2,726.00") instead of per-item
+  goalLinkedByType(goal: SavingsGoal): { type: string; value: number }[] {
+    const totals = new Map<string, number>();
+    for (const inv of goal.linked_investments) {
+      totals.set(inv.type, (totals.get(inv.type) ?? 0) + inv.value);
+    }
+    return this.investmentTypes
+      .filter(t => totals.has(t))
+      .map(type => ({ type, value: totals.get(type)! }));
   }
 
   private blankGoal(): GoalCreate {
