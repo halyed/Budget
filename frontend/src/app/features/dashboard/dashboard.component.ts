@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Chart, registerables } from 'chart.js';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { MonthLockService } from '../../core/services/month-lock.service';
 import { AiService, ChatMessage } from '../../core/services/ai.service';
 import { MonthlySummary, BudgetVsActual, PortfolioSummary } from '../../core/models/dashboard.model';
 import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
@@ -78,11 +79,21 @@ export class DashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   constructor(
     private dashboardService: DashboardService,
+    private monthLockService: MonthLockService,
     private aiService: AiService,
   ) {}
 
   ngOnInit(): void {
     this.loading.set(true);
+    this.monthLockService.resolveActiveMonth(this.selectedYear, this.selectedMonth).subscribe(({ year, month }) => {
+      this.selectedYear = year;
+      this.selectedMonth = month;
+      this.selectedLabel = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+      this.loadDashboard();
+    });
+  }
+
+  private loadDashboard(): void {
     forkJoin({
       summary: this.dashboardService.getSummary(this.selectedMonth, this.selectedYear),
       budgetVsActual: this.dashboardService.getBudgetVsActual(this.selectedMonth, this.selectedYear),

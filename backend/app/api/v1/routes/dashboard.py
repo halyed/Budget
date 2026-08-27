@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import extract, func
+from sqlalchemy import func
 from datetime import date
 from decimal import Decimal
 from app.core.database import get_db
@@ -23,8 +23,8 @@ def get_monthly_summary(
 ):
     base_q = db.query(Transaction).filter(
         Transaction.user_id == current_user.id,
-        extract("month", Transaction.date) == month,
-        extract("year", Transaction.date) == year,
+        Transaction.budget_month == month,
+        Transaction.budget_year == year,
     )
 
     total_income = base_q.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
@@ -59,8 +59,8 @@ def get_budget_vs_actual(
                 Transaction.user_id == current_user.id,
                 Transaction.category_id == cat.id,
                 Transaction.type == "expense",
-                extract("month", Transaction.date) == month,
-                extract("year", Transaction.date) == year,
+                Transaction.budget_month == month,
+                Transaction.budget_year == year,
             )
             .scalar() or Decimal("0.00")
         )

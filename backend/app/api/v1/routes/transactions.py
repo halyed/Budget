@@ -2,7 +2,6 @@ from typing import Optional, List
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import extract
 from datetime import date
 from pydantic import BaseModel
 from app.core.database import get_db
@@ -110,6 +109,8 @@ def bulk_import(
 
             db.add(Transaction(
                 date=tx_date,
+                budget_year=year,
+                budget_month=month,
                 amount=item.amount,
                 description=item.description,
                 type=item.type,
@@ -139,9 +140,9 @@ def list_transactions(
         Transaction.user_id == current_user.id
     )
     if month:
-        q = q.filter(extract("month", Transaction.date) == month)
+        q = q.filter(Transaction.budget_month == month)
     if year:
-        q = q.filter(extract("year", Transaction.date) == year)
+        q = q.filter(Transaction.budget_year == year)
     if type:
         q = q.filter(Transaction.type == type)
     if category_id:
@@ -170,8 +171,11 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    assert_month_open(db, current_user.id, payload.date.year, payload.date.month)
-    transaction = Transaction(**payload.model_dump(), user_id=current_user.id)
+    budget_year = payload.budget_year if payload.budget_year is not None else payload.date.year
+    budget_month = payload.budget_month if payload.budget_month is not None else payload.date.month
+    assert_month_open(db, current_user.id, budget_year, budget_month)
+    data = payload.model_dump(exclude={"budget_year", "budget_month"})
+    transaction = Transaction(**data, budget_year=budget_year, budget_month=budget_month, user_id=current_user.id)
     db.add(transaction)
     if payload.type == "savings":
         _adjust_savings(db, current_user.id, payload.amount)
@@ -193,9 +197,11 @@ def update_transaction(
     ).first()
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    assert_month_open(db, current_user.id, t.date.year, t.date.month)
-    if payload.date is not None:
-        assert_month_open(db, current_user.id, payload.date.year, payload.date.month)
+    assert_month_open(db, current_user.id, t.budget_year, t.budget_month)
+    new_budget_year = payload.budget_year if payload.budget_year is not None else t.budget_year
+    new_budget_month = payload.budget_month if payload.budget_month is not None else t.budget_month
+    if (new_budget_year, new_budget_month) != (t.budget_year, t.budget_month):
+        assert_month_open(db, current_user.id, new_budget_year, new_budget_month)
     old_type = t.type
     old_amount = t.amount
     for field, value in payload.model_dump(exclude_none=True).items():
@@ -224,7 +230,7 @@ def delete_transaction(
     ).first()
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    assert_month_open(db, current_user.id, t.date.year, t.date.month)
+    assert_month_open(db, current_user.id, t.budget_year, t.budget_month)
     if t.type == "savings":
         _adjust_savings(db, current_user.id, -t.amount)
     db.delete(t)
