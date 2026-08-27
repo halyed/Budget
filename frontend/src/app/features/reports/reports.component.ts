@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { SankeyController, Flow } from 'chartjs-chart-sankey';
 import { ApiService } from '../../core/services/api.service';
+import { MonthLockService } from '../../core/services/month-lock.service';
 import { CurrencyFormatPipe } from '../../core/pipes/currency-format.pipe';
 import { chartColors } from '../../core/utils/chart-colors';
 
@@ -94,10 +95,16 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
   private cashflowChart:  Chart | null = null;
   private pendingRender = false;
 
-  constructor(private api: ApiService) {}
+  private anchor: { year: number; month: number } | null = null;
+
+  constructor(private api: ApiService, private monthLockService: MonthLockService) {}
 
   ngOnInit(): void {
-    this.loadData();
+    const today = new Date();
+    this.monthLockService.resolveActiveMonth(today.getFullYear(), today.getMonth() + 1).subscribe(({ year, month }) => {
+      this.anchor = { year, month };
+      this.loadData();
+    });
   }
 
   // Fires after every DOM update — renders charts as soon as canvases are available
@@ -119,12 +126,16 @@ export class ReportsComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   private loadData(initialLoad = true): void {
+    if (!this.anchor) return;
     if (initialLoad) this.loading.set(true);
     this.error.set(null);
     this.destroyCharts();
 
-    this.api.get<ReportData>('/reports/monthly-summary', { months: this.selectedMonths() })
-      .subscribe({
+    this.api.get<ReportData>('/reports/monthly-summary', {
+      months: this.selectedMonths(),
+      anchor_year: this.anchor.year,
+      anchor_month: this.anchor.month,
+    }).subscribe({
         next: (d) => {
           this.data.set(d);
           this.selectedChartMonthIdx.set(d.months.length - 1);

@@ -26,6 +26,19 @@ export class TransactionsComponent implements OnInit {
   errorMsg     = signal<string | null>(null);
   showAllTx    = signal(false);
 
+  // Period filter — declared before `form`/`editTxForm` below, since blankTx()
+  // reads selectedMonth/selectedYear and class fields initialize in
+  // declaration order.
+  private today = new Date();
+  selectedMonth = signal(this.today.getMonth() + 1);
+  selectedYear  = signal(this.today.getFullYear());
+
+  selectedLabel = computed(() => this.monthLabel(this.selectedYear(), this.selectedMonth()));
+
+  monthLabel(year: number, month: number): string {
+    return new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
   form: TransactionCreate     = this.blankTx();
   editTxForm: TransactionCreate = this.blankTx();
 
@@ -49,16 +62,6 @@ export class TransactionsComponent implements OnInit {
   // AI category suggestion
   suggestedCategory = signal<string | null>(null);
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Period filter
-  private today = new Date();
-  selectedMonth = signal(this.today.getMonth() + 1);
-  selectedYear  = signal(this.today.getFullYear());
-
-  selectedLabel = computed(() => {
-    const d = new Date(this.selectedYear(), this.selectedMonth() - 1, 1);
-    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
-  });
 
   // A past month is automatically and permanently closed server-side — no toggle for it.
   isPastMonth = computed(() => {
@@ -170,7 +173,15 @@ export class TransactionsComponent implements OnInit {
   }
 
   startEditTx(t: Transaction): void {
-    this.editTxForm = { date: t.date, amount: t.amount, description: t.description ?? '', type: t.type, category_id: t.category_id };
+    this.editTxForm = {
+      date: t.date,
+      budget_year: t.budget_year,
+      budget_month: t.budget_month,
+      amount: t.amount,
+      description: t.description ?? '',
+      type: t.type,
+      category_id: t.category_id,
+    };
     this.showTxForm.set(false);
     this.editingTxId.set(t.id);
   }
@@ -247,8 +258,27 @@ export class TransactionsComponent implements OnInit {
 
   dismissSuggestion(): void { this.suggestedCategory.set(null); }
 
+  // Opens the "New Transaction" form. The date defaults to today (when the
+  // money actually moved), but the transaction is booked against whichever
+  // month tab is currently open — so e.g. a salary that lands Aug 27 can
+  // still be added while viewing September, without being blocked by August
+  // being closed.
+  openTxForm(): void {
+    this.form = this.blankTx();
+    this.showTxForm.set(true);
+    this.editingTxId.set(null);
+  }
+
   private blankTx(): TransactionCreate {
-    return { date: new Date().toISOString().split('T')[0], amount: 0, description: '', type: 'expense', category_id: null };
+    return {
+      date: new Date().toISOString().split('T')[0],
+      budget_year: this.selectedYear(),
+      budget_month: this.selectedMonth(),
+      amount: 0,
+      description: '',
+      type: 'expense',
+      category_id: null,
+    };
   }
 
   private exampleJson(): string {

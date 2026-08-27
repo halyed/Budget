@@ -14,7 +14,12 @@ class TransactionBase(BaseModel):
 
 
 class TransactionCreate(TransactionBase):
-    pass
+    # Month this transaction counts toward. Optional — if omitted, defaults to
+    # the calendar month of `date` (e.g. bulk import). The app normally sends
+    # this explicitly, set to whichever month tab is open, so a transaction
+    # dated today can still be booked to a different (open) budget month.
+    budget_year: int | None = None
+    budget_month: int | None = None
 
 
 class TransactionUpdate(BaseModel):
@@ -23,10 +28,14 @@ class TransactionUpdate(BaseModel):
     description: str | None = None
     type: str | None = None
     category_id: int | None = None
+    budget_year: int | None = None
+    budget_month: int | None = None
 
 
 class TransactionRead(TransactionBase):
     id: int
+    budget_year: int
+    budget_month: int
     category: Optional[CategoryRead] = None
 
     model_config = {"from_attributes": True}

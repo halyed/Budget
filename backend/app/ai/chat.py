@@ -2,7 +2,7 @@ import logging
 from datetime import date
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from sqlalchemy import extract, func
+from sqlalchemy import func
 
 from groq import Groq
 
@@ -30,8 +30,8 @@ def _build_snapshot(db: Session, user: User) -> str:
 
     base = db.query(Transaction).filter(
         Transaction.user_id == user.id,
-        extract("year", Transaction.date) == year,
-        extract("month", Transaction.date) == month,
+        Transaction.budget_year == year,
+        Transaction.budget_month == month,
     )
     income   = base.filter(Transaction.type == "income").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
     expenses = base.filter(Transaction.type == "expense").with_entities(func.sum(Transaction.amount)).scalar() or Decimal("0.00")
@@ -48,8 +48,8 @@ def _build_snapshot(db: Session, user: User) -> str:
                 Transaction.user_id == user.id,
                 Transaction.category_id == cat.id,
                 Transaction.type == "expense",
-                extract("year", Transaction.date) == year,
-                extract("month", Transaction.date) == month,
+                Transaction.budget_year == year,
+                Transaction.budget_month == month,
             )
             .scalar() or Decimal("0.00")
         )
